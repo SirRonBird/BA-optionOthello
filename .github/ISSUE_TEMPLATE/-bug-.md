@@ -1,8 +1,10 @@
+---
 name: "[BUG]"
 about: Template to create an issue to describe a bug which needs fixing
 title: "[BUG]"
 labels: bug
 assignees: ''
+---
 body:
   - type: markdown
     attributes: 
