@@ -1,4 +1,3 @@
----
 name: "[BUG]"
 about: Template to create an issue to describe a bug which needs fixing
 title: "[BUG]"
@@ -38,6 +37,6 @@ body:
     id: screenshots
     attributes:
       label: Put here any screenshots or videos (optional)
----
+
 
 
