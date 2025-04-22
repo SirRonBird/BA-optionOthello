@@ -1,0 +1,49 @@
+name: "[Feature]"
+description: Template to create an issue to descripe a desired feature
+title: "[Component] - [Feature] "
+labels: [feature]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please give the feature a name used
+  - type: input
+    attributes:
+      label: Feature-Name
+      placeholder: feature
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Describe the functionality of the feature
+  - type: textarea
+    attributes:
+      label: Functionality
+      placeholder: Functions
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: | 
+        For what component is this feature? (Use # to select component)
+  - type: input
+    attributes:
+      label: Component
+      placeholder: '#ComponentNumber'
+    validations:
+      required: false
+  - type: dropdown
+    attributes:
+      label: Area
+      options:
+        - AI
+        - UI
+        - Game Engine
+
+
+
+
+
+

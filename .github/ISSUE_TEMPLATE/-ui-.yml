@@ -1,0 +1,34 @@
+name: "[UI]"
+description: Template to create an issue for a UI Element
+title: "[Ui]"
+labels: [ UI ]
+assignees: SirRonBird
+body:
+  - type: textarea
+    attributes:
+      label: Describe the UI-Element
+      placeholder: |
+        + Position
+        + Type
+        + Color
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe the behavior of the UI Element
+      placeholder: |
+        + onClick
+        + Data from
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Connect the UI-Element with a feature
+    validations:
+      required: false
+
+
+
+
+
+

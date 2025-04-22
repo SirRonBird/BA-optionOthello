@@ -1,0 +1,47 @@
+name: "[Component]"
+description: Template to create an issue to descripe a desired coponent
+title: "[Component]"
+labels: [component]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please give the component a name used for class
+  - type: input
+    attributes:
+      label: Component-Name
+      placeholder: component
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Describe what the component is for
+  - type: textarea
+    attributes:
+      label: Component description
+      placeholder: Description
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Describe the features for this component. (Use # to enter existing issues)
+  - type: textarea
+    attributes:
+      label: Features
+      placeholder: |
+        + Feature 1 
+        + #
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Area
+      options:
+        - AI
+        - UI
+        - Game Engine
+
+
+
