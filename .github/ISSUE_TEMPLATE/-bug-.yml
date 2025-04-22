@@ -1,0 +1,49 @@
+name: "[BUG]"
+description: Template to create an issue to describe a bug which needs fixing
+title: "[BUG]"
+labels: [bug]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out the sections below to describe the bug.
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: e.g. When I click on the 'Save' button, nothing happens.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to page X
+        2. Click here
+        3. Click there
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What was the expected result?
+      placeholder: I expected this to happen
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened?
+      placeholder: This happened
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or videos
+      description: Add screenshots or screen recordings to help explain your problem (optional)
