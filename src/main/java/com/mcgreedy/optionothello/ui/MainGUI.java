@@ -1,6 +1,11 @@
 package com.mcgreedy.optionothello.ui;
 
-import com.mcgreedy.optionothello.Constants;
+import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
+import com.mcgreedy.optionothello.gamemanagement.Player;
+import com.mcgreedy.optionothello.gamemanagement.RandomPlayer;
+import com.mcgreedy.optionothello.utils.Constants;
+import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -17,17 +22,19 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.util.Objects;
 import java.util.Optional;
 
-import static com.mcgreedy.optionothello.Constants.*;
+import static com.mcgreedy.optionothello.utils.Constants.*;
 
 public class MainGUI extends Application {
 
-    // UI components
-    private GridPane boardGrid;
-    private Button newGameButton;
-    private Button newTournamentButton;
+    //UI Elements
+    static GridPane boardGrid;
+    Button newGameButton;
 
     //Player Settings
     private ComboBox<String> blackPlayerTypeSelector;
@@ -35,21 +42,24 @@ public class MainGUI extends Application {
 
 
     //GameManager
-    private static String gameManagerName;
+    private static Gamemanager gameManager;
     public Label gamesPlayed;
     public Label standingBlack;
     public Label standingWhite;
     public Label blackWins;
     public Label whiteWins;
 
-    public static void setGameManagerName(String Name) {
-        gameManagerName = Name;
+    private static final Logger LOGGER = LogManager.getLogger(MainGUI.class);
+
+    public static void setGameManagerName(Gamemanager manager) {
+        gameManager = manager;
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        System.out.println("Hello my name is " + gameManagerName + "\n I will be your Host today.");
+        LOGGER.info("Starting MainGUI");
+        LOGGER.info("Gamemanager: " + gameManager);
 
         // Create the root border pane
         BorderPane root = new BorderPane();
@@ -64,15 +74,16 @@ public class MainGUI extends Application {
 
 
         // Create the game board in the center
+        // UI components
         boardGrid = createBoardGrid();
         root.setCenter(boardGrid);
 
         //create left panel for Black Player
-        VBox leftPanel = createPlayerPanel(Constants.PLAYER_COLOR.BLACK);
+        VBox leftPanel = createPlayerPanel(PLAYER_COLOR.BLACK);
         root.setLeft(leftPanel);
 
         //create right panel for White Player
-        VBox rightPanel = createPlayerPanel(Constants.PLAYER_COLOR.WHITE);
+        VBox rightPanel = createPlayerPanel(PLAYER_COLOR.WHITE);
         root.setRight(rightPanel);
 
         //create bottom panel with game info and controls
@@ -83,6 +94,42 @@ public class MainGUI extends Application {
         primaryStage.setOnCloseRequest(e -> {
             System.out.println("It was nice to play with you!!");
         });
+    }
+
+    public static void updatedBoardGrid(long black, long white) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                int index = row * BOARD_SIZE + col;
+                StackPane cell = getCellFromGrid(boardGrid, row, col);
+
+                cell.getChildren().removeIf(node -> node instanceof Circle);
+
+                long mask = 1L << index;
+
+                if((black & mask) != 0){
+                    Circle circle = createDisc(Color.BLACK);
+                    cell.getChildren().add(circle);
+                } else if((white & mask) != 0){
+                    Circle circle = createDisc(Color.WHITE);
+                    cell.getChildren().add(circle);
+                }
+            }
+        }
+    }
+
+    private static StackPane getCellFromGrid(GridPane grid, int row, int col) {
+        for (Node node : grid.getChildren()) {
+            if (GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col) {
+                return (StackPane) node;
+            }
+        }
+        throw new IllegalArgumentException("Cell not found at (" + row + ", " + col + ")");
+    }
+
+    private static Circle createDisc(Color color) {
+        Circle disc = new Circle(CELL_SIZE * 0.4); // etwas kleiner als Zelle
+        disc.setFill(color);
+        return disc;
     }
 
     private HBox createControlPanel() {
@@ -156,11 +203,10 @@ public class MainGUI extends Application {
         newGameButton.setPrefWidth(150);
         newGameButton.setStyle("-fx-font-weight: Bold;");
         newGameButton.setOnAction(e -> {
-            //TODO: Start new Game
             showNewGameDialog();
         });
 
-        newTournamentButton = new Button("New Tournament");
+        Button newTournamentButton = new Button("New Tournament");
         newTournamentButton.setPrefWidth(150);
         newTournamentButton.setStyle("-fx-font-weight: Bold;");
         newTournamentButton.setOnAction(e -> {
@@ -245,11 +291,74 @@ public class MainGUI extends Application {
         Optional<ButtonType> result = dialog.showAndWait();
         result.ifPresent(button -> {
             if (button == startButtonType) {
-                System.out.println("Start new game");
+                gameManager.newGame(
+                        Objects.requireNonNull(getBlackPlayer()),
+                        Objects.requireNonNull(getWhitePlayer())
+                );
+                newGameButton.setText("Reset Game");
             } else {
-                System.out.println("Cancel");
             }
         });
+    }
+
+    private Player getBlackPlayer(){
+        PLAYER_TYPE blackPlayerType = PLAYER_TYPE.valueOf(blackPlayerTypeSelector.getValue());
+        switch (blackPlayerType){
+            case HUMAN -> {
+                return new HumanPlayer(
+                        PLAYER_COLOR.BLACK,
+                        PLAYER_TYPE.HUMAN
+                );
+            }
+            case MCTS -> {
+                //TODO: create MCTS Player
+                return null;
+            }
+            case RANDOM_AI -> {
+                //TODO: create Random AI Player
+                return new RandomPlayer(
+                        PLAYER_COLOR.BLACK,
+                        PLAYER_TYPE.RANDOM_AI
+                );
+            }
+            case O_MCTS -> {
+                //TODO: create O_MCTS Player
+                return null;
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
+    private Player getWhitePlayer(){
+        PLAYER_TYPE whitePlayerType = PLAYER_TYPE.valueOf(whitePlayerTypeSelector.getValue());
+        switch (whitePlayerType){
+            case HUMAN -> {
+                return new HumanPlayer(
+                        PLAYER_COLOR.WHITE,
+                        PLAYER_TYPE.HUMAN
+                );
+            }
+            case MCTS -> {
+                //TODO: create MCTS Player
+                return null;
+            }
+            case RANDOM_AI -> {
+                //TODO: create Random AI Player
+                return new RandomPlayer(
+                        PLAYER_COLOR.WHITE,
+                        PLAYER_TYPE.RANDOM_AI
+                );
+            }
+            case O_MCTS -> {
+                //TODO: create O_MCTS Player
+                return null;
+            }
+            default -> {
+                return null;
+            }
+        }
     }
 
     private void showNewTournamentDialog(){
@@ -285,7 +394,7 @@ public class MainGUI extends Application {
 
     }
 
-    private VBox createPlayerPanel(Constants.PLAYER_COLOR playerColor) {
+    private VBox createPlayerPanel(PLAYER_COLOR playerColor) {
         VBox panel = new VBox(15);
         panel.setPadding(new Insets(10));
         panel.setPrefWidth(300);
@@ -307,7 +416,7 @@ public class MainGUI extends Application {
         playerSelector.getSelectionModel().select(0);
         playerSelector.setMaxWidth(Double.MAX_VALUE);
 
-        if (playerColor == Constants.PLAYER_COLOR.BLACK) {
+        if (playerColor == PLAYER_COLOR.BLACK) {
             blackPlayerTypeSelector = playerSelector;
         } else {
             whitePlayerTypeSelector = playerSelector;
@@ -515,6 +624,7 @@ public class MainGUI extends Application {
 
     private void handleCellClick(int r, int c) {
         System.out.println("(" + r + ", " + c + ")");
+        //TODO: Check wich players move it is.
     }
 
 }

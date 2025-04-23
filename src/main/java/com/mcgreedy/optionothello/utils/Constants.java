@@ -1,4 +1,4 @@
-package com.mcgreedy.optionothello;
+package com.mcgreedy.optionothello.utils;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
