@@ -14,11 +14,11 @@ public final class Constants {
     // Game constants
     public static final int BOARD_SIZE = 8;
     public static final int CELL_SIZE = 60;
-    public static final int PIECE_RADIUS = 25;
+    public static final int CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
 
     public enum PLAYER_COLOR {
         BLACK, WHITE
-    };
+    }
 
     public enum PLAYER_TYPE {
         HUMAN,

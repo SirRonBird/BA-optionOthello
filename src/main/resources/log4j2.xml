@@ -6,7 +6,7 @@
     </appenders>
 
     <loggers>
-        <root level="ALL">
+        <root level="INFO">
             <AppenderRef ref="CONSOLE"/>
         </root>
     </loggers>

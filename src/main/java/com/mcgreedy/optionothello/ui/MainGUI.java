@@ -1,10 +1,8 @@
 package com.mcgreedy.optionothello.ui;
 
-import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.gamemanagement.RandomPlayer;
-import com.mcgreedy.optionothello.utils.Constants;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
@@ -25,16 +23,29 @@ import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import static com.mcgreedy.optionothello.utils.Constants.*;
 
+/**
+ * MainGUI is the primary graphical user interface for the application. It manages the interactions
+ * between the user and the game, including setting up the game board, handling player settings,
+ * and initiating new games or tournaments.
+ * This class extends javafx.application.Application and serves as the entry point for launching the GUI.
+ */
 public class MainGUI extends Application {
 
     //UI Elements
     static GridPane boardGrid;
     Button newGameButton;
+    VBox leftPanel;
+    VBox rightPanel;
+    static TitledPane blackPlayerPane;
+    static TitledPane whitePlayerPane;
+
 
     //Player Settings
     private ComboBox<String> blackPlayerTypeSelector;
@@ -44,10 +55,16 @@ public class MainGUI extends Application {
     //GameManager
     private static Gamemanager gameManager;
     public Label gamesPlayed;
-    public Label standingBlack;
-    public Label standingWhite;
+    public static Label standingBlack;
+    public static Label standingWhite;
     public Label blackWins;
     public Label whiteWins;
+
+    public static Player playerToMove;
+    public static List<Integer> validMoveCells;
+
+    public static int lastClickedCell;
+
 
     private static final Logger LOGGER = LogManager.getLogger(MainGUI.class);
 
@@ -55,8 +72,37 @@ public class MainGUI extends Application {
         gameManager = manager;
     }
 
+    public static void setPlayerToMove(Player player) {
+        playerToMove = player;
+        if (playerToMove.getColor() == PLAYER_COLOR.BLACK) {
+            blackPlayerPane.setBorder(
+                    new Border(
+                            new BorderStroke(
+                                    Color.INDIANRED,
+                                    BorderStrokeStyle.SOLID,
+                                    new CornerRadii(1),
+                                    new BorderWidths(2)
+                            )
+                    )
+            );
+            whitePlayerPane.setBorder(Border.EMPTY);
+        } else if (playerToMove.getColor() == PLAYER_COLOR.WHITE) {
+            whitePlayerPane.setBorder(
+                    new Border(
+                            new BorderStroke(
+                                    Color.INDIANRED,
+                                    BorderStrokeStyle.SOLID,
+                                    new CornerRadii(1),
+                                    new BorderWidths(2)
+                            )
+                    )
+            );
+            blackPlayerPane.setBorder(Border.EMPTY);
+        }
+    }
+
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage){
 
         LOGGER.info("Starting MainGUI");
         LOGGER.info("Gamemanager: " + gameManager);
@@ -79,21 +125,25 @@ public class MainGUI extends Application {
         root.setCenter(boardGrid);
 
         //create left panel for Black Player
-        VBox leftPanel = createPlayerPanel(PLAYER_COLOR.BLACK);
+        leftPanel = createPlayerPanel(PLAYER_COLOR.BLACK);
         root.setLeft(leftPanel);
 
         //create right panel for White Player
-        VBox rightPanel = createPlayerPanel(PLAYER_COLOR.WHITE);
+        rightPanel = createPlayerPanel(PLAYER_COLOR.WHITE);
         root.setRight(rightPanel);
 
         //create bottom panel with game info and controls
         HBox bottomPanel = createControlPanel();
         root.setBottom(bottomPanel);
 
+        validMoveCells = new ArrayList<>();
+
         // Set up shutdown hook to clean up executor
         primaryStage.setOnCloseRequest(e -> {
             System.out.println("It was nice to play with you!!");
         });
+
+
     }
 
     public static void updatedBoardGrid(long black, long white) {
@@ -130,6 +180,33 @@ public class MainGUI extends Application {
         Circle disc = new Circle(CELL_SIZE * 0.4); // etwas kleiner als Zelle
         disc.setFill(color);
         return disc;
+    }
+
+    public static void showPossibleMoves(long possibleMoves) {
+        validMoveCells.clear();
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                int index = row * BOARD_SIZE + col;
+                StackPane cell = getCellFromGrid(boardGrid, row, col);
+
+                long mask = 1L << index;
+
+                if ((possibleMoves & mask) != 0) {
+                    validMoveCells.add(index);
+                    cell.setBorder(new Border(
+                            new BorderStroke(
+                                    Color.GRAY,
+                                    BorderStrokeStyle.SOLID,
+                                    new CornerRadii(1),
+                                    new BorderWidths(2)
+                            )
+                    ));
+                } else {
+                    cell.setBorder(Border.EMPTY);
+                }
+
+            }
+        }
     }
 
     private HBox createControlPanel() {
@@ -265,6 +342,35 @@ public class MainGUI extends Application {
         return panel;
     }
 
+    public static void updateGameStandings(int whiteScore, int blackScore){
+        standingWhite.setText(String.valueOf(whiteScore));
+        standingBlack.setText(String.valueOf(blackScore));
+    }
+
+    public static void gameOver(int winner){
+        showPossibleMoves(0L);
+
+        showGameOverDialog(winner);
+    }
+
+    private static void showGameOverDialog(int winner){
+        String winnerString = winner == 0 ? "Black":"White";
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Game Over");
+        dialog.setHeaderText("Game Over... " + winnerString + " wins!");
+
+        ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType);
+
+        VBox content = new VBox(10);
+
+        dialog.getDialogPane().setContent(content);
+
+        LOGGER.info("Game Over Dialog: {} wins!", winnerString);
+        Optional<ButtonType> result = dialog.showAndWait();
+    }
+
     private void showNewGameDialog(){
 
         Dialog<ButtonType> dialog = new Dialog<>();
@@ -276,14 +382,17 @@ public class MainGUI extends Application {
         ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(startButtonType, cancelButtonType);
 
+        Player blackPlayer = getBlackPlayer();
+        Player whitePlayer = getWhitePlayer();
+
         // Placeholder
         VBox content = new VBox(10);
         content.setPadding(new Insets(10));
+        assert blackPlayer != null;
+        assert whitePlayer != null;
         content.getChildren().addAll(
-                new Label("Einstellungen Spieler Schwarz:"),
-                new Label("(Hier kommt später das Options-UI)"),
-                new Label("Einstellungen Spieler Weiß:"),
-                new Label("(Hier kommt später das Options-UI)")
+                new Label(blackPlayer.toString()),
+                new Label(whitePlayer.toString())
         );
 
         dialog.getDialogPane().setContent(content);
@@ -292,11 +401,12 @@ public class MainGUI extends Application {
         result.ifPresent(button -> {
             if (button == startButtonType) {
                 gameManager.newGame(
-                        Objects.requireNonNull(getBlackPlayer()),
-                        Objects.requireNonNull(getWhitePlayer())
+                        Objects.requireNonNull(blackPlayer),
+                        Objects.requireNonNull(whitePlayer)
                 );
                 newGameButton.setText("Reset Game");
             } else {
+                LOGGER.info("Cancel new game dialog");
             }
         });
     }
@@ -307,7 +417,8 @@ public class MainGUI extends Application {
             case HUMAN -> {
                 return new HumanPlayer(
                         PLAYER_COLOR.BLACK,
-                        PLAYER_TYPE.HUMAN
+                        PLAYER_TYPE.HUMAN,
+                        gameManager
                 );
             }
             case MCTS -> {
@@ -318,7 +429,8 @@ public class MainGUI extends Application {
                 //TODO: create Random AI Player
                 return new RandomPlayer(
                         PLAYER_COLOR.BLACK,
-                        PLAYER_TYPE.RANDOM_AI
+                        PLAYER_TYPE.RANDOM_AI,
+                        gameManager
                 );
             }
             case O_MCTS -> {
@@ -337,7 +449,8 @@ public class MainGUI extends Application {
             case HUMAN -> {
                 return new HumanPlayer(
                         PLAYER_COLOR.WHITE,
-                        PLAYER_TYPE.HUMAN
+                        PLAYER_TYPE.HUMAN,
+                        gameManager
                 );
             }
             case MCTS -> {
@@ -348,7 +461,8 @@ public class MainGUI extends Application {
                 //TODO: create Random AI Player
                 return new RandomPlayer(
                         PLAYER_COLOR.WHITE,
-                        PLAYER_TYPE.RANDOM_AI
+                        PLAYER_TYPE.RANDOM_AI,
+                        gameManager
                 );
             }
             case O_MCTS -> {
@@ -405,6 +519,7 @@ public class MainGUI extends Application {
         playerPane.setCollapsible(false);
         playerPane.setText("Player " + playerColor);
 
+
         VBox playerContent = new VBox(10);
         playerContent.setPadding(new Insets(10));
         VBox.setVgrow(playerContent, Priority.ALWAYS);
@@ -418,8 +533,10 @@ public class MainGUI extends Application {
 
         if (playerColor == PLAYER_COLOR.BLACK) {
             blackPlayerTypeSelector = playerSelector;
+            blackPlayerPane = playerPane;
         } else {
             whitePlayerTypeSelector = playerSelector;
+            whitePlayerPane = playerPane;
         }
 
         TitledPane settingPane = new TitledPane();
@@ -622,9 +739,19 @@ public class MainGUI extends Application {
         return cell;
     }
 
+
     private void handleCellClick(int r, int c) {
-        System.out.println("(" + r + ", " + c + ")");
+        lastClickedCell = r * BOARD_SIZE + c;
+        LOGGER.debug("Clicked on field {},{} ({})", r, c, r * BOARD_SIZE + c);
         //TODO: Check wich players move it is.
+        LOGGER.debug("Player moves: {}", playerToMove);
+        if(validMoveCells.contains(lastClickedCell) && playerToMove.getType() == PLAYER_TYPE.HUMAN){
+            LOGGER.debug("Valid move");
+            playerToMove.makeMove();
+        } else {
+            LOGGER.debug("Invalid move");
+        }
+        lastClickedCell = -1;
     }
 
 }
