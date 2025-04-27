@@ -1,10 +1,19 @@
 package com.mcgreedy.optionothello.gamemanagement;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcgreedy.optionothello.dtos.SaveGameDTO;
+import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Game;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.ui.MainGUI;
 import com.mcgreedy.optionothello.utils.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class Gamemanager {
 
@@ -68,7 +77,7 @@ public class Gamemanager {
             LOGGER.debug("Make move at {} for player {}", move.getPosition(), move.getColor());
 
             //update game
-            currentGame.placePiece(move);
+            currentGame.updateBoard(move);
             currentGame.updateScore();
 
             //reset passes
@@ -104,7 +113,7 @@ public class Gamemanager {
         consecutivePasses++;
 
         //add pass-move to game
-        currentGame.addMoveToHistory(move);
+        currentGame.updateBoard(move);
 
         if(consecutivePasses >= 2){
             //game over
@@ -134,6 +143,71 @@ public class Gamemanager {
             currentPlayer.makeMove();
         }
 
+    }
+
+    public void saveGame(){
+        try{
+            String projectDir = System.getProperty("user.dir");
+            File directory = new File(projectDir, "savegames");
+
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            File gameFile = new File(directory, "savegame.json");
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            SaveGameDTO saveGameDTO = createSaveGameDTO();
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(gameFile, saveGameDTO);
+            LOGGER.info("Saved game to file");
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    private SaveGameDTO createSaveGameDTO(){
+        SaveGameDTO saveGameDTO = new SaveGameDTO();
+        SaveGameDTO.GameDetails gameDetails = new SaveGameDTO.GameDetails();
+
+        gameDetails.setId(UUID.randomUUID());
+
+        SaveGameDTO.PlayerDetails blackPlayerDetails = new SaveGameDTO.PlayerDetails();
+        blackPlayerDetails.setColor(blackPlayer.getColor());
+        blackPlayerDetails.setType(blackPlayer.getType());
+
+        SaveGameDTO.PlayerDetails whitePlayerDetails = new SaveGameDTO.PlayerDetails();
+        whitePlayerDetails.setColor(whitePlayer.getColor());
+        whitePlayerDetails.setType(whitePlayer.getType());
+
+        gameDetails.setBlackPlayer(blackPlayerDetails);
+        gameDetails.setWhitePlayer(whitePlayerDetails);
+        gameDetails.setStartBoardBlack(currentGame.board.startBlack);
+        gameDetails.setStartBoardWhite(currentGame.board.startWhite);
+
+        List<SaveGameDTO.MoveDetails> moveDetailsList = new ArrayList<>();
+        if (currentGame.moveHistory.size() != currentGame.boardHistory.size()) {
+            LOGGER.error("MoveHistory and BoardHistory have different sizes: {},{}", currentGame.moveHistory.size(), currentGame.boardHistory.size());
+        } else {
+            for (int i = 0; i < currentGame.moveHistory.size(); i++) {
+                Move move = currentGame.moveHistory.get(i);
+                Board board = currentGame.boardHistory.get(i);
+                SaveGameDTO.MoveDetails moveDetails = new SaveGameDTO.MoveDetails();
+
+                moveDetails.setColor(move.getColor());
+                moveDetails.setPosition(move.getPosition());
+                moveDetails.setSearchDepth(move.getSearchDepth());
+                moveDetails.setPlayerType(move.getPlayerType());
+                moveDetails.setBlackBoardAfterMove(board.getBlack());
+                moveDetails.setWhiteBoardAfterMove(board.getWhite());
+
+                moveDetailsList.add(moveDetails);
+            }
+            gameDetails.setMoves(moveDetailsList);
+        }
+
+
+        saveGameDTO.setGame(gameDetails);
+        return saveGameDTO;
     }
 
     public void newTournament(){}

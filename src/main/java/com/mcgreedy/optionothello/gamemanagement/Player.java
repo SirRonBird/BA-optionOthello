@@ -23,12 +23,8 @@ public abstract class Player {
         return type;
     }
 
-    //TODO
-    public abstract void makeMove();
 
-    public boolean isWhite() {
-        return color == Constants.PLAYER_COLOR.WHITE;
-    }
+    public abstract void makeMove();
 
 
     @Override

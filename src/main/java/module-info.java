@@ -8,7 +8,10 @@ module com.mcgreedy.optionothello {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires org.apache.logging.log4j;
+    requires com.fasterxml.jackson.databind;
 
+
+    exports com.mcgreedy.optionothello.dtos to com.fasterxml.jackson.databind;
     opens com.mcgreedy.optionothello to javafx.fxml;
     exports com.mcgreedy.optionothello;
     exports com.mcgreedy.optionothello.ui;

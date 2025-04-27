@@ -20,9 +20,17 @@ public class Board {
     //static final long START_WHITE = 0x80d9e377e7e7d7ffL;
     //static final long START_BLACK = 0x7f261c0818182800L;
 
+    public long startWhite = START_WHITE;
+    public long startBlack = START_BLACK;
+
     public Board() {
         black = START_BLACK;
         white = START_WHITE;
+    }
+
+    public Board(long black, long white) {
+        this.black = black;
+        this.white = white;
     }
 
     public void updateBoard(int position, boolean isWhite) {
@@ -106,5 +114,13 @@ public class Board {
 
     public long getWhite() {
         return white;
+    }
+
+    @Override
+    public String toString() {
+        return "Board{" +
+                "black=" + black +
+                ", white=" + white +
+                '}';
     }
 }

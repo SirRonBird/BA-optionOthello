@@ -1,6 +1,8 @@
 package com.mcgreedy.optionothello.engine;
 
 import com.mcgreedy.optionothello.utils.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,13 +17,14 @@ public class Game {
 
     public Board board;
 
+    private static final Logger LOGGER = LogManager.getLogger(Game.class);
+
     public Game() {
         blackPieces = 2;
         whitePieces = 2;
         moveHistory = new ArrayList<>();
-
+        boardHistory = new ArrayList<>();
         board = new Board();
-        addBoardToHistory(board);
     }
 
     public void updateScore() {
@@ -29,13 +32,16 @@ public class Game {
         this.whitePieces = Long.bitCount(this.board.getWhite());
     }
 
-    public void placePiece(Move move) {
+    public void updateBoard(Move move) {
         moveHistory.add(move);
+
         if (move.position == -1) {
-            addBoardToHistory(board);
+            Board newBoard = new Board(board.getBlack(), board.getWhite());
+            addBoardToHistory(newBoard);
         } else {
             board.updateBoard(move.position, move.color == Constants.PLAYER_COLOR.WHITE);
-            addBoardToHistory(board);
+            Board newBoard = new Board(board.getBlack(), board.getWhite());
+            addBoardToHistory(newBoard);
         }
     }
 
@@ -53,6 +59,7 @@ public class Game {
 
     public void addBoardToHistory(Board board) {
         assert this.boardHistory != null;
+        LOGGER.debug("Adding board to history: {}", board.toString());
         this.boardHistory.add(board);
     }
 

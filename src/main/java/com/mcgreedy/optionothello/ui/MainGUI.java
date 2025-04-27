@@ -363,12 +363,23 @@ public class MainGUI extends Application {
         ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(okButtonType);
 
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType);
+
         VBox content = new VBox(10);
 
         dialog.getDialogPane().setContent(content);
 
         LOGGER.info("Game Over Dialog: {} wins!", winnerString);
         Optional<ButtonType> result = dialog.showAndWait();
+        result.ifPresent(button -> {
+            if (button == saveButtonType) {
+                LOGGER.info("Save Game");
+                gameManager.saveGame();
+            } else {
+                LOGGER.info("Close Game");
+            }
+        });
     }
 
     private void showNewGameDialog(){
