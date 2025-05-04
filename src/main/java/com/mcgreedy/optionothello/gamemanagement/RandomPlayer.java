@@ -31,8 +31,13 @@ public class RandomPlayer extends Player {
                     1,
                     this.type
             );
+            try{
+                Thread.sleep(10);
+                this.gamemanager.makeMove(move);
+            } catch (InterruptedException e) {
+                LOGGER.error(e.getMessage());
+            }
 
-            this.gamemanager.makeMove(move);
         } else {
             LOGGER.info("RandomPlayer {} is passing because all possible moves are {}", this.color, allPossibleMoves);
             this.gamemanager.passMove(new Move(this.color, -1, -1, this.type));

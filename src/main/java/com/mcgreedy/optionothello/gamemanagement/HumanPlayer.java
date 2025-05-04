@@ -12,7 +12,7 @@ public class HumanPlayer extends Player {
 
     @Override
     public void makeMove() {
-        int position = MainGUI.lastClickedCell;
+        int position = MainGUI.getLastClickedCell();
 
         Move move =  new Move(
                 this.color,

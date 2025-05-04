@@ -14,6 +14,8 @@ module com.mcgreedy.optionothello {
     exports com.mcgreedy.optionothello.dtos to com.fasterxml.jackson.databind;
     opens com.mcgreedy.optionothello to javafx.fxml;
     exports com.mcgreedy.optionothello;
+    exports com.mcgreedy.optionothello.gamemanagement;
+    exports com.mcgreedy.optionothello.engine;
     exports com.mcgreedy.optionothello.ui;
     exports com.mcgreedy.optionothello.utils;
     opens com.mcgreedy.optionothello.utils to javafx.fxml;
