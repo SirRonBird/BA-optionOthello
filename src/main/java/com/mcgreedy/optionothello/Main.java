@@ -4,7 +4,7 @@ import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.ui.MainGUI;
 import javafx.application.Application;
 
-public class Main{
+public class Main {
 
     public static void main(String[] args) {
         Gamemanager gamemanager = new Gamemanager();

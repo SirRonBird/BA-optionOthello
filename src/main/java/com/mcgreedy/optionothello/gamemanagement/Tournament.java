@@ -32,33 +32,45 @@ public class Tournament {
         gamesLeft--;
     }
 
-    public void endGame(int winner){
+    public void endGame(int winner) {
         gamesPlayed++;
-        if(winner == 0){
+        if (winner == 0) {
             blackWins++;
-        } else if(winner == 1){
+        } else if (winner == 1) {
             whiteWins++;
         }
     }
 
-    public boolean hasFinished(){
+    public boolean hasFinished() {
         return gamesLeft == 0;
     }
 
-    public int getWinner(){
-        if(blackWins > whiteWins){
+    public int getWinner() {
+        if (blackWins > whiteWins) {
             return 0;
-        } else if(whiteWins > blackWins){
+        } else if (whiteWins > blackWins) {
             return 1;
         }
         return -1;
     }
 
-    public int getGamesPlayed(){
+    public int getGamesPlayed() {
         return gamesPlayed;
     }
 
-    /*@Override
+    public int getBlackWins() {
+        return blackWins;
+    }
+
+    public int getWhiteWins() {
+        return whiteWins;
+    }
+
+    public List<Game> getGames() {
+        return games;
+    }
+
+    @Override
     public String toString() {
         return "Tournament{" +
                 "blackPlayer=" + blackPlayer +
@@ -70,5 +82,5 @@ public class Tournament {
                 ", whiteWins=" + whiteWins +
                 ", gamesPlayed=" + gamesPlayed +
                 '}';
-    }*/
+    }
 }

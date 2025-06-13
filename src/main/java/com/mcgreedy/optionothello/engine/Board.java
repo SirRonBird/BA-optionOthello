@@ -1,6 +1,15 @@
 package com.mcgreedy.optionothello.engine;
 
 
+import com.mcgreedy.optionothello.utils.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
 public class Board {
 
     long black;
@@ -8,7 +17,7 @@ public class Board {
 
     static final long FULL = -1L; // every 64 Bits set to 1
 
-    static final int[] DIRECTIONS = { -8, 8, 1, -1, -7, 7, -9, 9 };
+    static final int[] DIRECTIONS = {-8, 8, 1, -1, -7, 7, -9, 9};
     static final long LEFT_EDGE = 0x0101010101010101L;
     static final long RIGHT_EDGE = 0x8080808080808080L;
     //static final long TOP_EDGE = 0xffL;
@@ -17,11 +26,13 @@ public class Board {
     static final long START_WHITE = 0x0000001008000000L;
     static final long START_BLACK = 0x0000000810000000L;
 
-    //static final long START_WHITE = 0x80d9e377e7e7d7ffL;
-    //static final long START_BLACK = 0x7f261c0818182800L;
+    //static final long START_WHITE = 0x10f7fL;
+    //static final long START_BLACK = 0x381c0e1000L;
 
     public long startWhite = START_WHITE;
     public long startBlack = START_BLACK;
+
+    private static final Logger LOGGER = LogManager.getLogger(Board.class);
 
     public Board() {
         black = START_BLACK;
@@ -63,7 +74,7 @@ public class Board {
         }
     }
 
-    public boolean isBoardFull(){
+    public boolean isBoardFull() {
         return (black | white) == FULL;
     }
 
@@ -106,8 +117,6 @@ public class Board {
     }
 
 
-
-
     public long getBlack() {
         return black;
     }
@@ -123,4 +132,46 @@ public class Board {
                 ", white=" + white +
                 '}';
     }
+
+    public boolean isGameOver() {
+        return isBoardFull() || generateAllPossibleMoves(true) == 0L && generateAllPossibleMoves(false) == 0L;
+    }
+
+    public List<Move> generateMovesAsList(boolean forWhite, int searchDepth, Constants.PLAYER_TYPE playerType) {
+        long bitboard = generateAllPossibleMoves(forWhite);
+        List<Move> moves = new ArrayList<>();
+        LOGGER.debug("Possible moves: {}", bitboard);
+        Constants.PLAYER_COLOR color = forWhite ? Constants.PLAYER_COLOR.WHITE : Constants.PLAYER_COLOR.BLACK;
+
+        for (int i = 0; i < Constants.CELL_COUNT; i++) {
+            if (((bitboard >>> i) & 1L) != 0) {
+                moves.add(new Move(color, i, searchDepth, playerType));
+            }
+        }
+        Collections.shuffle(moves, new Random());
+
+        return moves;
+    }
+
+    @Override
+    public Board clone() {
+        return new Board(this.black, this.white);
+    }
+
+    public Constants.PLAYER_COLOR getWinner() {
+        int blackCount = Long.bitCount(black);
+        int whiteCount = Long.bitCount(white);
+
+        if (blackCount > whiteCount) {
+            return Constants.PLAYER_COLOR.BLACK;
+        } else if (whiteCount > blackCount) {
+            return Constants.PLAYER_COLOR.WHITE;
+        } else {
+            return null; // oder z.B. Constants.PLAYER_COLOR.NONE
+        }
+
+    }
+
+    public int getWhiteCount(){ return Long.bitCount(white); }
+    public int getBlackCount(){ return Long.bitCount(black); }
 }

@@ -15,6 +15,7 @@ public final class Constants {
     public static final int BOARD_SIZE = 8;
     public static final int CELL_SIZE = 60;
     public static final int CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
+    public static final int CELL_GAP = 2;
 
     public enum PLAYER_COLOR {
         BLACK, WHITE
@@ -31,6 +32,9 @@ public final class Constants {
             Arrays.stream(PLAYER_TYPE.values()).map(Enum::name).collect(Collectors.toList())
     );
 
-
+    public enum MCTS_IMPROVEMENT_TYPE {
+        SIMULATION,
+        EXPLORATION
+    }
 
 }

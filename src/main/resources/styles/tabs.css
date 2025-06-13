@@ -1,0 +1,8 @@
+.tab-pane .tab-header-area .headers-region {
+    -fx-spacing: 0;
+}
+
+.tab-pane .tab-header-area .tab {
+    -fx-max-width: Infinity;
+    -fx-pref-width: 50%; /* nur bei 2 Tabs */
+}

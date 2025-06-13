@@ -1,6 +1,9 @@
-package com.mcgreedy.optionothello.gamemanagement;
+package com.mcgreedy.optionothello.ai;
 
+import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
+import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,31 +20,26 @@ public class RandomPlayer extends Player {
     }
 
     @Override
-    public void makeMove() {
-        long allPossibleMoves = gamemanager.currentGame.board.generateAllPossibleMoves(color == Constants.PLAYER_COLOR.WHITE);
+    public Move getMove(Board board) {
+        long allPossibleMoves = gamemanager.getCurrentGame().board.generateAllPossibleMoves(color == Constants.PLAYER_COLOR.WHITE);
 
-        if(allPossibleMoves != 0L) {
+        if (allPossibleMoves != 0L) {
 
             List<Integer> moveIndices = getMoveIndices(allPossibleMoves);
 
 
-            Move move = new Move(
+            return new Move(
                     this.color,
                     moveIndices.get((int) (Math.random() * moveIndices.size())),
                     1,
                     this.type
             );
-            try{
-                Thread.sleep(10);
-                this.gamemanager.makeMove(move);
-            } catch (InterruptedException e) {
-                LOGGER.error(e.getMessage());
-            }
-
         } else {
             LOGGER.info("RandomPlayer {} is passing because all possible moves are {}", this.color, allPossibleMoves);
-            this.gamemanager.passMove(new Move(this.color, -1, -1, this.type));
+            return new Move(this.color, -1, -1, this.type);
         }
+
+
     }
 
     private List<Integer> getMoveIndices(long bitboard) {

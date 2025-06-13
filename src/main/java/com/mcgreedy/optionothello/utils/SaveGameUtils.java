@@ -1,0 +1,274 @@
+package com.mcgreedy.optionothello.utils;
+
+import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.core.StreamWriteConstraints;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcgreedy.optionothello.dtos.SaveGameDTO;
+import com.mcgreedy.optionothello.dtos.SaveTournamentDTO;
+import com.mcgreedy.optionothello.engine.Board;
+import com.mcgreedy.optionothello.engine.Game;
+import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.gamemanagement.Player;
+import com.mcgreedy.optionothello.gamemanagement.Tournament;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.image.WritableImage;
+import javax.imageio.ImageIO;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class SaveGameUtils {
+
+    private SaveGameUtils() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    private static final Logger LOGGER = LogManager.getLogger(SaveGameUtils.class);
+
+    private static final List<SaveGameDTO> saveGames = new ArrayList<>();
+    private static final List<SaveTournamentDTO> saveTournaments = new ArrayList<>();
+
+    public static void saveGame(String name, int winner, Player blackPlayer, Player whitePlayer, Game currentGame) {
+        try {
+            String projectDir = System.getProperty("user.dir");
+            File directory = new File(projectDir, "savegames/games");
+
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            String filename = name + ".json";
+            File gameFile = new File(directory, filename);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            SaveGameDTO saveGameDTO = createSaveGameDTO(name, winner, blackPlayer, whitePlayer, currentGame);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(gameFile, saveGameDTO);
+            LOGGER.info("Saved game to file {}", filename);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    private static SaveGameDTO createSaveGameDTO(String gameName, int winner, Player blackPlayer, Player whitePlayer, Game currentGame) {
+        SaveGameDTO saveGameDTO = new SaveGameDTO();
+        SaveGameDTO.GameDetails gameDetails = new SaveGameDTO.GameDetails();
+
+        gameDetails.setId(UUID.randomUUID());
+        gameDetails.setGameName(gameName);
+        gameDetails.setWinner(winner);
+
+        SaveGameDTO.PlayerDetails blackPlayerDetails = new SaveGameDTO.PlayerDetails();
+        blackPlayerDetails.setColor(blackPlayer.getColor());
+        blackPlayerDetails.setType(blackPlayer.getType());
+
+        SaveGameDTO.PlayerDetails whitePlayerDetails = new SaveGameDTO.PlayerDetails();
+        whitePlayerDetails.setColor(whitePlayer.getColor());
+        whitePlayerDetails.setType(whitePlayer.getType());
+
+        gameDetails.setBlackPlayer(blackPlayerDetails);
+        gameDetails.setWhitePlayer(whitePlayerDetails);
+        gameDetails.setStartBoardBlack(currentGame.board.startBlack);
+        gameDetails.setStartBoardWhite(currentGame.board.startWhite);
+
+        List<SaveGameDTO.MoveDetails> moveDetailsList = new ArrayList<>();
+        if (currentGame.moveHistory.size() != currentGame.boardHistory.size()) {
+            LOGGER.error("MoveHistory and BoardHistory have different sizes: {},{}", currentGame.moveHistory.size(), currentGame.boardHistory.size());
+        } else {
+            for (int i = 0; i < currentGame.moveHistory.size(); i++) {
+                Move move = currentGame.moveHistory.get(i);
+                Board board = currentGame.boardHistory.get(i);
+                SaveGameDTO.MoveDetails moveDetails = new SaveGameDTO.MoveDetails();
+
+                moveDetails.setColor(move.getColor());
+                moveDetails.setPosition(move.getPosition());
+                moveDetails.setSearchDepth(move.getSearchDepth());
+                moveDetails.setPlayerType(move.getPlayerType());
+                moveDetails.setBlackBoardAfterMove(board.getBlack());
+                moveDetails.setWhiteBoardAfterMove(board.getWhite());
+
+
+
+                moveDetailsList.add(moveDetails);
+            }
+            gameDetails.setMoves(moveDetailsList);
+        }
+
+
+        saveGameDTO.setGame(gameDetails);
+        return saveGameDTO;
+    }
+
+    public static void loadSaveGames() {
+        saveGames.clear();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+
+        String projectDir = System.getProperty("user.dir");
+        File directory = new File(projectDir, "savegames/games");
+
+        if (!directory.exists() || !directory.isDirectory()) {
+            LOGGER.error("There is no savegames directory or it is not a directory");
+            return;
+        }
+
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null) {
+            LOGGER.error("There are no savegames in the savegames directory");
+            return;
+        }
+
+        for (File file : files) {
+            try (Reader reader = Files.newBufferedReader(file.toPath())) {
+                SaveGameDTO saveGame = objectMapper.readValue(reader, SaveGameDTO.class);
+                if (saveGame != null) {
+                    //check for duplicates -> clearing the list beforehand
+                    saveGames.add(saveGame);
+                }
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage());
+            }
+        }
+    }
+
+    public static void loadSaveTournaments() {
+        saveTournaments.clear();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String projectDir = System.getProperty("user.dir");
+        File directory = new File(projectDir, "savegames/tournaments");
+
+        if (!directory.exists() || !directory.isDirectory()) {
+            LOGGER.error("There is no save tournaments directory or it is not a directory");
+            return;
+        }
+
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null) {
+            LOGGER.error("There are no save tournaments in the savegames directory");
+            return;
+        }
+
+        for (File file : files) {
+            try (Reader reader = Files.newBufferedReader(file.toPath())) {
+                SaveTournamentDTO saveTournament = objectMapper.readValue(reader, SaveTournamentDTO.class);
+                if (saveTournament != null) {
+                    //check for duplicates -> clearing the list beforehand
+                    saveTournaments.add(saveTournament);
+                }
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage());
+            }
+        }
+    }
+
+
+    public static List<SaveGameDTO> getSaveGames() {
+        return saveGames;
+    }
+
+    public static List<SaveTournamentDTO> getSaveTournaments() {
+        return saveTournaments;
+    }
+
+    public static void saveTournament(String name, int winner, Player blackPlayer, Player whitePlayer, Tournament tournament) {
+        try {
+            String projectDir = System.getProperty("user.dir");
+            File directory = new File(projectDir, "savegames/tournaments");
+
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            String filename = name + ".json";
+            File gameFile = new File(directory, filename);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            SaveTournamentDTO saveTournamentDTO = createTournamentDTO(name, winner, blackPlayer, whitePlayer, tournament);
+
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(gameFile, saveTournamentDTO);
+            LOGGER.info("Saved game to file {}", filename);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    private static SaveTournamentDTO createTournamentDTO(
+            String name, int winner, Player blackPlayer, Player whitePlayer, Tournament tournament) {
+
+        SaveTournamentDTO saveTournamentDTO = new SaveTournamentDTO();
+        SaveTournamentDTO.TournamentDetails tournamentDetails = new SaveTournamentDTO.TournamentDetails();
+
+        tournamentDetails.setId(UUID.randomUUID());
+        tournamentDetails.setTournamentName(name);
+        tournamentDetails.setWinner(winner);
+        tournamentDetails.setNumberOfGames(tournament.getGamesPlayed());
+        tournamentDetails.setBlackWins(tournament.getBlackWins());
+        tournamentDetails.setWhiteWins(tournament.getWhiteWins());
+
+
+        SaveTournamentDTO.PlayerDetails blackPlayerDetails = new SaveTournamentDTO.PlayerDetails();
+        blackPlayerDetails.setColor(blackPlayer.getColor());
+        blackPlayerDetails.setType(blackPlayer.getType());
+
+        SaveTournamentDTO.PlayerDetails whitePlayerDetails = new SaveTournamentDTO.PlayerDetails();
+        whitePlayerDetails.setColor(whitePlayer.getColor());
+        whitePlayerDetails.setType(whitePlayer.getType());
+
+        tournamentDetails.setBlackPlayer(blackPlayerDetails);
+        tournamentDetails.setWhitePlayer(whitePlayerDetails);
+
+        AtomicInteger gameIndex = new AtomicInteger();
+        List<SaveTournamentDTO.GameDetails> gameDetailsList = new ArrayList<>();
+        tournament.getGames().forEach(game -> {
+            SaveTournamentDTO.GameDetails currentGameDetails = new SaveTournamentDTO.GameDetails();
+            currentGameDetails.setWinner(game.getWinner());
+            currentGameDetails.setGameNumber(gameIndex.getAndIncrement());
+
+            currentGameDetails.setStartBoardBlack(game.board.startBlack);
+            currentGameDetails.setStartBoardWhite(game.board.startWhite);
+
+            List<SaveTournamentDTO.MoveDetails> moveDetailsList = new ArrayList<>();
+            for (int i = 0; i < game.moveHistory.size(); i++) {
+                Move move = game.moveHistory.get(i);
+                Board board = game.boardHistory.get(i);
+                SaveTournamentDTO.MoveDetails moveDetails = new SaveTournamentDTO.MoveDetails();
+
+                moveDetails.setColor(move.getColor());
+                moveDetails.setPosition(move.getPosition());
+                moveDetails.setSearchDepth(move.getSearchDepth());
+                moveDetails.setPlayerType(move.getPlayerType());
+                moveDetails.setBlackBoardAfterMove(board.getBlack());
+                moveDetails.setWhiteBoardAfterMove(board.getWhite());
+
+                moveDetailsList.add(moveDetails);
+            }
+            currentGameDetails.setMoves(moveDetailsList);
+            gameDetailsList.add(currentGameDetails);
+        });
+
+        tournamentDetails.setGames(gameDetailsList);
+
+        saveTournamentDTO.setTournament(tournamentDetails);
+
+        return saveTournamentDTO;
+    }
+
+    public static void saveBoardAsPng(Node node, String filename){
+        WritableImage image = node.snapshot(new SnapshotParameters(), null);
+        File file = new File(filename);
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(image,null), "png", file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

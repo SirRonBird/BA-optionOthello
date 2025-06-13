@@ -1,5 +1,6 @@
 package com.mcgreedy.optionothello.gamemanagement;
 
+import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.ui.MainGUI;
 import com.mcgreedy.optionothello.utils.Constants;
@@ -11,19 +12,18 @@ public class HumanPlayer extends Player {
     }
 
     @Override
-    public void makeMove() {
+    public Move getMove(Board board) {
         int position = MainGUI.getLastClickedCell();
 
-        Move move =  new Move(
+        Move move = new Move(
                 this.color,
                 position,
                 0,
                 this.type
         );
-
-        this.gamemanager.makeMove(move);
+        gamemanager.makeMove(move);
+        return move;
     }
-
 
 
     @Override
@@ -32,5 +32,10 @@ public class HumanPlayer extends Player {
                 "color=" + color +
                 ", type=" + type +
                 '}';
+    }
+
+    public void skipMove() {
+        Move skipMove = new Move(this.color, -1, -1, this.type);
+        gamemanager.passMove(skipMove);
     }
 }

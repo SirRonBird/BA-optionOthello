@@ -1,5 +1,7 @@
 package com.mcgreedy.optionothello.gamemanagement;
 
+import com.mcgreedy.optionothello.engine.Board;
+import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.utils.Constants;
 
 public abstract class Player {
@@ -9,7 +11,7 @@ public abstract class Player {
 
     protected Gamemanager gamemanager;
 
-    public Player(Constants.PLAYER_COLOR color, Constants.PLAYER_TYPE type, Gamemanager gamemanager) {
+    protected Player(Constants.PLAYER_COLOR color, Constants.PLAYER_TYPE type, Gamemanager gamemanager) {
         this.color = color;
         this.type = type;
         this.gamemanager = gamemanager;
@@ -23,9 +25,7 @@ public abstract class Player {
         return type;
     }
 
-
-    public abstract void makeMove();
-
+    public abstract Move getMove(Board board);
 
     @Override
     public String toString() {

@@ -15,6 +15,8 @@ public class Game {
     public List<Move> moveHistory;
     public List<Board> boardHistory;
 
+    int winner = -1;
+
     public Board board;
 
     private static final Logger LOGGER = LogManager.getLogger(Game.class);
@@ -35,14 +37,22 @@ public class Game {
     public void updateBoard(Move move) {
         moveHistory.add(move);
 
-        if (move.position == -1) {
+        if (move.getPosition() == -1) {
             Board newBoard = new Board(board.getBlack(), board.getWhite());
             addBoardToHistory(newBoard);
         } else {
-            board.updateBoard(move.position, move.color == Constants.PLAYER_COLOR.WHITE);
+            board.updateBoard(move.getPosition(), move.getColor() == Constants.PLAYER_COLOR.WHITE);
             Board newBoard = new Board(board.getBlack(), board.getWhite());
             addBoardToHistory(newBoard);
         }
+    }
+
+    public void setWinner(int winner) {
+        this.winner = winner;
+    }
+
+    public int getWinner() {
+        return winner;
     }
 
     public long getBlackBoard() {

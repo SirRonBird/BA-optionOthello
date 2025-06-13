@@ -6,29 +6,30 @@ import com.mcgreedy.optionothello.utils.Constants;
 import java.util.List;
 import java.util.UUID;
 
+public class SaveTournamentDTO {
 
-public class SaveGameDTO {
+    @JsonProperty("Tournament")
+    public TournamentDetails tournament;
 
-    @JsonProperty("Game")
-    public GameDetails game;
-
-    public GameDetails getGame() {
-        return game;
+    public TournamentDetails getTournament() {
+        return tournament;
     }
 
-    public void setGame(GameDetails game) {
-        this.game = game;
+    public void setTournament(TournamentDetails tournament) {
+        this.tournament = tournament;
     }
 
-    public static class GameDetails {
+    public static class TournamentDetails {
         private UUID id;
-        private String gameName;
+        private String tournamentName;
         private int winner;
+        private int numberOfGames;
+        private int blackWins;
+        private int whiteWins;
         private PlayerDetails blackPlayer;
         private PlayerDetails whitePlayer;
-        private long startBoardBlack;
-        private long startBoardWhite;
-        private List<MoveDetails> moves;
+
+        private List<GameDetails> games;
 
         public UUID getId() {
             return id;
@@ -38,12 +39,12 @@ public class SaveGameDTO {
             this.id = id;
         }
 
-        public String getGameName() {
-            return gameName;
+        public String getTournamentName() {
+            return tournamentName;
         }
 
-        public void setGameName(String gameName) {
-            this.gameName = gameName;
+        public void setTournamentName(String tournamentName) {
+            this.tournamentName = tournamentName;
         }
 
         public int getWinner() {
@@ -52,6 +53,14 @@ public class SaveGameDTO {
 
         public void setWinner(int winner) {
             this.winner = winner;
+        }
+
+        public int getNumberOfGames() {
+            return numberOfGames;
+        }
+
+        public void setNumberOfGames(int numberOfGames) {
+            this.numberOfGames = numberOfGames;
         }
 
         public PlayerDetails getBlackPlayer() {
@@ -70,36 +79,34 @@ public class SaveGameDTO {
             this.whitePlayer = whitePlayer;
         }
 
-        public List<MoveDetails> getMoves() {
-            return moves;
+        public List<GameDetails> getGames() {
+            return games;
         }
 
-        public void setMoves(List<MoveDetails> moves) {
-            this.moves = moves;
+        public void setGames(List<GameDetails> games) {
+            this.games = games;
         }
 
-
-        public long getStartBoardBlack() {
-            return startBoardBlack;
+        public int getBlackWins() {
+            return blackWins;
         }
 
-        public void setStartBoardBlack(long startBoardBlack) {
-            this.startBoardBlack = startBoardBlack;
+        public void setBlackWins(int blackWins) {
+            this.blackWins = blackWins;
         }
 
-        public long getStartBoardWhite() {
-            return startBoardWhite;
+        public int getWhiteWins() {
+            return whiteWins;
         }
 
-        public void setStartBoardWhite(long startBoardWhite) {
-            this.startBoardWhite = startBoardWhite;
+        public void setWhiteWins(int whiteWins) {
+            this.whiteWins = whiteWins;
         }
     }
 
     public static class PlayerDetails {
         private Constants.PLAYER_TYPE type;
         private Constants.PLAYER_COLOR color;
-
 
         public Constants.PLAYER_TYPE getType() {
             return type;
@@ -118,6 +125,56 @@ public class SaveGameDTO {
         }
     }
 
+    public static class GameDetails {
+        private int gameNumber;
+        private int winner;
+
+        private long startBoardBlack;
+        private long startBoardWhite;
+
+        private List<MoveDetails> moves;
+
+        public int getWinner() {
+            return winner;
+        }
+
+        public void setWinner(int winner) {
+            this.winner = winner;
+        }
+
+        public List<MoveDetails> getMoves() {
+            return moves;
+        }
+
+        public void setMoves(List<MoveDetails> moves) {
+            this.moves = moves;
+        }
+
+        public int getGameNumber() {
+            return gameNumber;
+        }
+
+        public void setGameNumber(int gameNumber) {
+            this.gameNumber = gameNumber;
+        }
+
+        public long getStartBoardBlack() {
+            return startBoardBlack;
+        }
+
+        public void setStartBoardBlack(long startBoardBlack) {
+            this.startBoardBlack = startBoardBlack;
+        }
+
+        public long getStartBoardWhite() {
+            return startBoardWhite;
+        }
+
+        public void setStartBoardWhite(long startBoardWhite) {
+            this.startBoardWhite = startBoardWhite;
+        }
+    }
+
     public static class MoveDetails {
         private Constants.PLAYER_COLOR color;
         private int position;
@@ -125,7 +182,6 @@ public class SaveGameDTO {
         private Constants.PLAYER_TYPE playerType;
         private long blackBoardAfterMove;
         private long whiteBoardAfterMove;
-
 
         public Constants.PLAYER_COLOR getColor() {
             return color;
@@ -174,10 +230,5 @@ public class SaveGameDTO {
         public void setWhiteBoardAfterMove(long whiteBoardAfterMove) {
             this.whiteBoardAfterMove = whiteBoardAfterMove;
         }
-
-
-
     }
-
-
 }
