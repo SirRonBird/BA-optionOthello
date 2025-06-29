@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BoardTest {
@@ -149,5 +150,16 @@ class BoardTest {
         List<Move> moves = board.generateMovesAsList(false, 0, Constants.PLAYER_TYPE.MCTS);
 
         assertTrue(moves.isEmpty());
+    }
+
+    @Test
+    void availabeMoves(){
+        Board board = new Board(36279104748076927L, 9096739464582578304L);
+
+        List<Move> movesBlack = board.generateMovesAsList(false, 0, Constants.PLAYER_TYPE.O_MCTS);
+        List<Move> movesWhite = board.generateMovesAsList(true, 0, Constants.PLAYER_TYPE.O_MCTS);
+
+        assertFalse(movesBlack.isEmpty());
+        assertFalse(movesWhite.isEmpty());
     }
 }

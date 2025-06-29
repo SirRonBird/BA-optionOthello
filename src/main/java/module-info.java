@@ -14,6 +14,8 @@ module com.mcgreedy.optionothello {
   requires reactfx;
   requires javafx.swing;
   requires org.graalvm.polyglot;
+  requires java.scripting;
+  requires java.prefs;
 
   // Für Jackson: Erlaube Zugriff auf Felder/Klassen via Reflection
   opens com.mcgreedy.optionothello.engine to com.fasterxml.jackson.databind;
@@ -30,4 +32,5 @@ module com.mcgreedy.optionothello {
   exports com.mcgreedy.optionothello.ui;
   exports com.mcgreedy.optionothello.utils;
   exports com.mcgreedy.optionothello.ai;
+  exports com.mcgreedy.optionothello.dtos;
 }

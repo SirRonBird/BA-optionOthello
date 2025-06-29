@@ -4,7 +4,10 @@ import com.mcgreedy.optionothello.ui.GameAnalysisUI;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -34,7 +37,6 @@ public final class GUIUtils {
         grid.setPadding(new Insets(10));
         grid.setStyle("-fx-background-color: #2E8B57;");
 
-
         // Create the cells
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
@@ -53,7 +55,13 @@ public final class GUIUtils {
         final int c = col;
 
         if (clickHandler != null) {
-            cell.setOnMouseClicked(e -> clickHandler.accept(r, c));
+            cell.setOnMouseClicked(e -> {
+                if(e.getButton() == MouseButton.PRIMARY) {
+                    clickHandler.accept(r, c);
+                } else {
+                    System.out.println(e.getButton());
+                }
+            });
         }
 
         cell.setStyle(getCellStyle(row, col));
@@ -221,6 +229,23 @@ public final class GUIUtils {
         }
     }
 
+    public static void updateMaskGrid(long mask, GridPane maskBoardGrid) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                int index = row * BOARD_SIZE + col;
+                StackPane cell = getCellFromGrid(maskBoardGrid, row, col);
+                cell.getChildren().removeIf(Circle.class::isInstance);
+
+                long board = 1L << index;
+                if((mask & board) != 0){
+                    Circle circle = createMaskCirle();
+                    cell.getChildren().add(circle);
+                }
+
+            }
+        }
+    }
+
     public static Circle getPieceFromGrid(GridPane boardGrid, int row, int col) {
         StackPane cell = getCellFromGrid(boardGrid, row, col);
 
@@ -233,7 +258,7 @@ public final class GUIUtils {
         return null;
     }
 
-    private static StackPane getCellFromGrid(GridPane grid, int row, int col) {
+    public static StackPane getCellFromGrid(GridPane grid, int row, int col) {
         for (Node node : grid.getChildren()) {
             if (GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col) {
                 return (StackPane) node;
@@ -256,21 +281,33 @@ public final class GUIUtils {
         return disc;
     }
 
+    private static Circle createMaskCirle(){
+        Circle circle = new Circle(CELL_SIZE * 0.4);
+        circle.setFill(Color.GRAY);
+        circle.setOpacity(0.5);
+        circle.setStroke(Color.BLACK);
+        circle.setStrokeWidth(1);
+
+        return circle;
+    }
+
     public static void markPiece(int row, int col){
         Circle piece = GUIUtils.getPieceFromGrid(GameAnalysisUI.gameBoard,row,col);
 
-        assert piece != null;
-        if(piece.getStroke() == null){
-            piece.setStroke(Color.RED);
-            piece.setStrokeWidth(4);
-        } else if(piece.getStroke().equals(Color.RED)) {
-            piece.setStroke(null);
-            piece.setStrokeWidth(0);
-        } else {
-            piece.setStroke(Color.RED);
-            piece.setStrokeWidth(4);
+        if(piece != null) {
+            if(piece.getStroke() == null){
+                piece.setStroke(Color.RED);
+                piece.setStrokeWidth(4);
+            } else if(piece.getStroke().equals(Color.RED)) {
+                piece.setStroke(null);
+                piece.setStrokeWidth(0);
+            } else {
+                piece.setStroke(Color.RED);
+                piece.setStrokeWidth(4);
+            }
         }
     }
+
 
 
 }

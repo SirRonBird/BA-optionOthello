@@ -24,7 +24,9 @@ class MCTSPlayerTest {
 
         MCTSOptions options = new MCTSOptions(
                 1000,
-                1.41
+                1.41,
+            false,
+            false
         );
 
         MCTSPlayer player = new MCTSPlayer(color, type, dummyManager, options);

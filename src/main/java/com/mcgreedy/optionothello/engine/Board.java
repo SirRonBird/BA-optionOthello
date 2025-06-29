@@ -2,6 +2,7 @@ package com.mcgreedy.optionothello.engine;
 
 
 import com.mcgreedy.optionothello.utils.Constants;
+import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,6 +16,10 @@ public class Board {
     long black;
     long white;
 
+    boolean isMask;
+    public long mask;
+    public String name;
+
     static final long FULL = -1L; // every 64 Bits set to 1
 
     static final int[] DIRECTIONS = {-8, 8, 1, -1, -7, 7, -9, 9};
@@ -26,8 +31,8 @@ public class Board {
     static final long START_WHITE = 0x0000001008000000L;
     static final long START_BLACK = 0x0000000810000000L;
 
-    //static final long START_WHITE = 0x10f7fL;
-    //static final long START_BLACK = 0x381c0e1000L;
+    /*static final long START_WHITE = -1082908604159952644L;
+    static final long START_BLACK = 1010851010122024706L;*/
 
     public long startWhite = START_WHITE;
     public long startBlack = START_BLACK;
@@ -37,14 +42,35 @@ public class Board {
     public Board() {
         black = START_BLACK;
         white = START_WHITE;
+        this.isMask = false;
     }
 
     public Board(long black, long white) {
         this.black = black;
         this.white = white;
+        this.isMask = false;
+    }
+
+    public Board(String name, boolean isMask) {
+        this.name = name;
+        this.isMask = isMask;
+        this.mask = 0L;
+    }
+
+    public void updateMask(int position) {
+        this.mask ^= (1L << position);
+    }
+
+    public void clearMask(){
+        if(this.isMask){
+            this.mask = 0L;
+        }
     }
 
     public void updateBoard(int position, boolean isWhite) {
+        if(position == -1){
+            return;
+        }
         long move = 1L << position;
         long player = isWhite ? white : black;
         long opponent = isWhite ? black : white;
@@ -78,7 +104,6 @@ public class Board {
         return (black | white) == FULL;
     }
 
-
     public long generateAllPossibleMoves(boolean forWhite) {
         long player = forWhite ? white : black;
         long opponent = forWhite ? black : white;
@@ -101,7 +126,6 @@ public class Board {
         return possibleMoves;
     }
 
-
     private long shift(long bits, int direction) {
         return switch (direction) {
             case 1 -> (bits << 1) & ~LEFT_EDGE;      // Osten (nach rechts)
@@ -116,7 +140,6 @@ public class Board {
         };
     }
 
-
     public long getBlack() {
         return black;
     }
@@ -125,12 +148,26 @@ public class Board {
         return white;
     }
 
+    public boolean boardIsHittingMask(Board mask, PLAYER_COLOR color) {
+        if(mask.isMask){
+            long boardLong = color == PLAYER_COLOR.BLACK ? this.getBlack() : this.getWhite();
+            return (boardLong & mask.mask) != 0;
+        }
+        return false;
+    }
+
+
     @Override
     public String toString() {
-        return "Board{" +
+        if(this.isMask){
+            return "Mask-Board{"+
+                "mask="+ mask+ '}';
+        }else {
+            return "Board{" +
                 "black=" + black +
                 ", white=" + white +
                 '}';
+        }
     }
 
     public boolean isGameOver() {
@@ -155,7 +192,13 @@ public class Board {
 
     @Override
     public Board clone() {
-        return new Board(this.black, this.white);
+        if(this.isMask){
+            Board clone = new Board(this.name,true);
+            clone.mask = this.mask;
+            return clone;
+        } else {
+            return new Board(this.black, this.white);
+        }
     }
 
     public Constants.PLAYER_COLOR getWinner() {

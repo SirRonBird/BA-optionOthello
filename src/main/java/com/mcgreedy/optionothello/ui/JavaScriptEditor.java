@@ -20,7 +20,7 @@ public class JavaScriptEditor extends VBox {
     codeArea.setWrapText(true);
     codeArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14pt;");
 
-    codeArea.setPrefHeight(300);
+    codeArea.setPrefHeight(200);
 
     final Pattern whiteSpace = Pattern.compile( "^\\s+" );
     codeArea.addEventHandler( KeyEvent.KEY_PRESSED, KE ->

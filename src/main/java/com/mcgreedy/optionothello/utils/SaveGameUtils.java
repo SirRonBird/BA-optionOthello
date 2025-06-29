@@ -2,7 +2,12 @@ package com.mcgreedy.optionothello.utils;
 
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.StreamWriteConstraints;
+import com.fasterxml.jackson.core.exc.StreamWriteException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcgreedy.optionothello.ai.Option;
+import com.mcgreedy.optionothello.dtos.OptionDTO;
+import com.mcgreedy.optionothello.dtos.OptionDTO.BoardMaskDTO;
 import com.mcgreedy.optionothello.dtos.SaveGameDTO;
 import com.mcgreedy.optionothello.dtos.SaveTournamentDTO;
 import com.mcgreedy.optionothello.engine.Board;
@@ -37,6 +42,7 @@ public class SaveGameUtils {
 
     private static final List<SaveGameDTO> saveGames = new ArrayList<>();
     private static final List<SaveTournamentDTO> saveTournaments = new ArrayList<>();
+    private static final List<OptionDTO> saveOptions = new ArrayList<>();
 
     public static void saveGame(String name, int winner, Player blackPlayer, Player whitePlayer, Game currentGame) {
         try {
@@ -170,6 +176,33 @@ public class SaveGameUtils {
         }
     }
 
+    public static void loadSaveOptions() {
+        saveOptions.clear();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String projectDir = System.getProperty("user.dir");
+        File directory = new File(projectDir, "options/");
+        if (!directory.exists() || !directory.isDirectory()) {
+            LOGGER.error("There is no options directory or it is not a directory");
+            return;
+        }
+
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null) {
+            LOGGER.error("There are no save options in the savegames directory");
+            return;
+        }
+        for (File file : files) {
+            try (Reader reader = Files.newBufferedReader(file.toPath())){
+                OptionDTO optionDTO = objectMapper.readValue(reader, OptionDTO.class);
+                if (optionDTO != null) {
+                    saveOptions.add(optionDTO);
+                }
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage());
+            }
+        }
+    }
 
     public static List<SaveGameDTO> getSaveGames() {
         return saveGames;
@@ -177,6 +210,10 @@ public class SaveGameUtils {
 
     public static List<SaveTournamentDTO> getSaveTournaments() {
         return saveTournaments;
+    }
+
+    public static List<OptionDTO> getSaveOptions(){
+        return saveOptions;
     }
 
     public static void saveTournament(String name, int winner, Player blackPlayer, Player whitePlayer, Tournament tournament) {
@@ -270,5 +307,50 @@ public class SaveGameUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void saveOption(Option option, String name){
+        try{
+            String projectDir = System.getProperty("user.dir");
+            File directory = new File(projectDir,"options/");
+            if(!directory.exists()){
+                directory.mkdirs();
+            }
+            String filename = name + ".json";
+            File file = new File(directory, filename);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            OptionDTO optionDTO = new OptionDTO(
+                name,
+                toMaskDTO(option.getInitiationSet()),
+                option.getPolicy(),
+                option.getTerminationCondition());
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, optionDTO);
+            LOGGER.info("Saved option to file {}", filename);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+        }
+        loadSaveOptions();
+    }
+
+    public static List<BoardMaskDTO> toMaskDTO(List<Board> boards) {
+        List<BoardMaskDTO> boardMaskDTOs = new ArrayList<>();
+        for (Board board : boards) {
+            BoardMaskDTO boardMaskDTO = new BoardMaskDTO(
+                board.mask,board.name
+            );
+            boardMaskDTOs.add(boardMaskDTO);
+        }
+        return boardMaskDTOs;
+    }
+
+    public static List<Board> fromMaskDTO(List<BoardMaskDTO> dto) {
+        List<Board> boards = new ArrayList<>();
+        for(BoardMaskDTO mask : dto){
+            Board board = new Board(mask.name, true);
+            board.mask = mask.mask;
+            boards.add(board);
+        }
+        return boards;
     }
 }

@@ -5,6 +5,7 @@ import static javafx.application.Platform.exit;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.SaveGameUtils;
+import java.util.prefs.Preferences;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.SingleSelectionModel;
@@ -31,9 +32,11 @@ public class MainGUI extends Application {
   //GameManager
   private static Gamemanager gameManager;
 
-  SingleSelectionModel<Tab> selectionModel;
+
+  static SingleSelectionModel<Tab> selectionModel;
 
   private static final Logger LOGGER = LogManager.getLogger(MainGUI.class);
+  static Preferences preferences = Preferences.userNodeForPackage(MainGUI.class);
 
   public static void setGameManagerName(Gamemanager manager) {
     gameManager = manager;
@@ -41,6 +44,8 @@ public class MainGUI extends Application {
 
   @Override
   public void start(Stage primaryStage) {
+
+
 
     LOGGER.info("Starting MainGUI");
     LOGGER.info("Game manager: {}", gameManager);
@@ -71,8 +76,11 @@ public class MainGUI extends Application {
     selectionModel.selectedItemProperty().addListener((observable, oldTab, newTab) -> {
       if (newTab == gameTab) {
         LOGGER.info("Opening game tab");
+        SaveGameUtils.loadSaveOptions();
       } else if (newTab == optionsTab) {
         LOGGER.info("Opening options tab");
+        SaveGameUtils.loadSaveOptions();
+        optionsUI.updateOptionListView();
       } else if (newTab == analyseTab) {
         LOGGER.info("Opening analyse tab");
         SaveGameUtils.loadSaveGames();
@@ -89,14 +97,21 @@ public class MainGUI extends Application {
     primaryStage.setTitle("Reversi Game");
     primaryStage.setResizable(false);
     primaryStage.setScene(scene);
+    primaryStage.setX(preferences.getDouble("WindowX", 0));
+    primaryStage.setY(preferences.getDouble("WindowY", 0));
+
     primaryStage.show();
+
 
 
     // Set up shutdown hook to clean up executor
     primaryStage.setOnCloseRequest(e -> {
       LOGGER.info("Shutting down application");
+      preferences.putDouble("WindowX", primaryStage.getScene().getWindow().getX());
+      preferences.putDouble("WindowY", primaryStage.getScene().getWindow().getY());
       exit();
     });
+
 
   }
 
@@ -130,5 +145,9 @@ public class MainGUI extends Application {
 
   public static void updateScoreBoard(int blackScore, int whiteScore, int gamesPlayed) {
     gameUI.updateScoreBoard(blackScore, whiteScore, gamesPlayed);
+  }
+
+  public static void goToOptionsTab(){
+    selectionModel.select(1);
   }
 }

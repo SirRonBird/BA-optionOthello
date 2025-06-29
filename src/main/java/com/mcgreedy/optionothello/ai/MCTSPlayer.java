@@ -26,8 +26,8 @@ public class MCTSPlayer extends Player {
     public MCTSPlayer(PLAYER_COLOR color, PLAYER_TYPE type, Gamemanager gamemanager, MCTSOptions mctsSettings) {
         super(color, type, gamemanager);
         this.settings = mctsSettings;
-        explorationConstant = settings.getExplorationConstant();
-        SIMULATION_LIMIT = settings.getSimulationLimit();
+        explorationConstant = settings.explorationConstant();
+        SIMULATION_LIMIT = settings.simulationLimit();
         LOGGER.info("Created MCTSPlayer with settings:" + settings);
     }
 

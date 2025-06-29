@@ -7,12 +7,17 @@ import static com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPES;
 
 import com.mcgreedy.optionothello.ai.MCTSOptions;
 import com.mcgreedy.optionothello.ai.MCTSPlayer;
+import com.mcgreedy.optionothello.ai.OMCTSPlayer;
+import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.ai.RandomPlayer;
+import com.mcgreedy.optionothello.dtos.OptionDTO;
+import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants;
 import com.mcgreedy.optionothello.utils.GUIUtils;
+import com.mcgreedy.optionothello.utils.SaveGameUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +37,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Separator;
@@ -84,6 +90,7 @@ public class GameUI {
   Label whiteWins;
   Button blackSkipMove;
   Button whiteSkipMove;
+  ListView<OptionDTO> optionsList;
 
   //Player Settings
   private ComboBox<String> blackPlayerTypeSelector;
@@ -416,19 +423,16 @@ public class GameUI {
         VBox optionBox = new VBox(5);
         optionBox.setAlignment(Pos.CENTER);
         Label optionLabel = new Label("Options:");
-        ListView<String> options = new ListView<>();
-        options.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        ObservableList<String> items = FXCollections.observableArrayList();
-        options.setItems(items);
+
+        optionsList = createOptionsList();
 
         Button addOptionButton = new Button("Add Option");
         addOptionButton.setPrefWidth(200);
         addOptionButton.setOnAction(e -> {
-          //TODO: switch to Options Tab
-          //selectionModel.select(1);
+          MainGUI.goToOptionsTab();
         });
 
-        optionBox.getChildren().addAll(optionLabel, options, addOptionButton);
+        optionBox.getChildren().addAll(optionLabel, optionsList, addOptionButton);
 
         box.getChildren().addAll(omctsExplorationParameterBox, optionBox);
 
@@ -437,6 +441,37 @@ public class GameUI {
     }
 
     return box;
+  }
+
+  private ListView<OptionDTO> createOptionsList(){
+    ListView<OptionDTO> optionsList = new ListView<>();
+    optionsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    SaveGameUtils.loadSaveOptions();
+    optionsList.getItems().addAll(SaveGameUtils.getSaveOptions());
+
+    optionsList.setCellFactory(_ -> new ListCell<>(){
+      @Override
+      protected void updateItem(OptionDTO item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty || item == null) {
+          setText(null);
+          setGraphic(null);
+          setStyle(null);
+        } else {
+          setStyle("-fx-padding: 5;");
+          setGraphic(createOptionDetailItem(item));
+        }
+      }
+    });
+
+    return optionsList;
+  }
+
+  private Label createOptionDetailItem(OptionDTO item) {
+    Label titleLabel = new Label(item.getName());
+    titleLabel.setStyle("-fx-font-size: 12px;");
+
+    return titleLabel;
   }
 
   private void playerSkipMove(PLAYER_COLOR playerColor) {
@@ -673,7 +708,9 @@ public class GameUI {
       case MCTS -> {
         MCTSOptions mctsOptions = new MCTSOptions(
             mctsSimulationLimit,
-            Double.parseDouble(mctsExplorationParameterTextBox.getText())
+            Double.parseDouble(mctsExplorationParameterTextBox.getText()),
+            mctsRaveEnabled,
+            mctsMastEnabled
         );
         return new MCTSPlayer(
             PLAYER_COLOR.BLACK,
@@ -690,8 +727,22 @@ public class GameUI {
         );
       }
       case O_MCTS -> {
-        //TODO: create O_MCTS Player
-        return null;
+        List<OptionDTO> selectedOptions = optionsList.getSelectionModel().getSelectedItems();
+        List<Option> options = new ArrayList<>();
+        for (OptionDTO optionDTO : selectedOptions) {
+          Option option = new Option(
+              SaveGameUtils.fromMaskDTO(optionDTO.getInitiationSet()),
+              optionDTO.getPolicy(),
+              optionDTO.getTerminationCondition()
+          );
+          options.add(option);
+        }
+        return new OMCTSPlayer(
+            PLAYER_COLOR.BLACK,
+            PLAYER_TYPE.O_MCTS,
+            gameManager,
+            options
+        );
       }
       default -> {
         return null;
@@ -712,7 +763,9 @@ public class GameUI {
       case MCTS -> {
         MCTSOptions mctsOptions = new MCTSOptions(
             mctsSimulationLimit,
-            Double.parseDouble(mctsExplorationParameterTextBox.getText())
+            Double.parseDouble(mctsExplorationParameterTextBox.getText()),
+            mctsRaveEnabled,
+            mctsMastEnabled
         );
         return new MCTSPlayer(
             PLAYER_COLOR.WHITE,
@@ -722,7 +775,6 @@ public class GameUI {
         );
       }
       case RANDOM_AI -> {
-        //TODO: create Random AI Player
         return new RandomPlayer(
             PLAYER_COLOR.WHITE,
             PLAYER_TYPE.RANDOM_AI,
@@ -730,8 +782,22 @@ public class GameUI {
         );
       }
       case O_MCTS -> {
-        //TODO: create O_MCTS Player
-        return null;
+        List<OptionDTO> selectedOptions = optionsList.getSelectionModel().getSelectedItems();
+        List<Option> options = new ArrayList<>();
+        for (OptionDTO optionDTO : selectedOptions) {
+          Option option = new Option(
+              SaveGameUtils.fromMaskDTO(optionDTO.getInitiationSet()),
+              optionDTO.getPolicy(),
+              optionDTO.getTerminationCondition()
+          );
+          options.add(option);
+        }
+        return new OMCTSPlayer(
+            PLAYER_COLOR.WHITE,
+            PLAYER_TYPE.O_MCTS,
+            gameManager,
+            options
+        );
       }
       default -> {
         return null;
