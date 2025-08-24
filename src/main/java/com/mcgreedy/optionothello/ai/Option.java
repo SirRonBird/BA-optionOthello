@@ -3,72 +3,22 @@ package com.mcgreedy.optionothello.ai;
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
-import java.io.IOException;
 import java.util.List;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class Option {
+public interface Option {
 
-  List<Board> initiationSet; // T
+  Logger LOGGER = LogManager.getLogger(Option.class);
 
-  String policy; // pi
+  boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor);
 
-  String terminationCondition; // beta
+  List<Board> initiationSet();
 
-  public Option(List<Board> initiationSet, String policy, String terminationCondition) {
-    this.initiationSet = initiationSet;
-    this.policy = policy;
-    this.terminationCondition = terminationCondition;
-  }
+  boolean shouldTerminate(Board board, PLAYER_COLOR playerColor);
 
-  public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR color) {
-    boolean result = false;
-    for (Board m : initiationSet) {
-      result |= board.boardIsHittingMask(m, color);
-    }
-    return result;
-  }
+  Move getBestMove(Board board, List<Move> possibleMoves);
 
-  public double executePolicy(Board board, Move move) {
-    try( Context context = Context.newBuilder("js").allowAllAccess(true).build() ) {
-      context.getBindings("js").putMember("board", board);
-      context.getBindings("js").putMember("move", move);
-      context.eval("js",policy);
-      Value policyFunction = context.getBindings("js").getMember("policy");
-      Value result = policyFunction.execute(board, move);
-      //return Double.parseDouble(result.asString());
-      System.out.println(result);
-      if(result.fitsInDouble()){
-        return result.asDouble();
-      } else if (result.fitsInInt()) {
-        return result.asInt();
-      } else {
-        return Double.parseDouble(result.asString());
-      }
-    }
-  }
+  String getName();
 
-  public boolean checkTermination(Board board) {
-    try (Context context = Context.newBuilder("js").allowAllAccess(true).build()) {
-      context.getBindings("js").putMember("board", board);
-      context.eval("js", terminationCondition);
-      Value terminationFunc = context.getBindings("js").getMember("terminationCondition");
-      Value result = terminationFunc.execute(board);
-      return result.asBoolean();
-    }
-  }
-
-  public List<Board> getInitiationSet() {
-    return initiationSet;
-  }
-
-  public String getPolicy() {
-    return policy;
-  }
-
-  public String getTerminationCondition() {
-    return terminationCondition;
-  }
 }

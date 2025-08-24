@@ -2,6 +2,7 @@ package com.mcgreedy.optionothello.ai;
 
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.engine.MoveStatistics;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants;
@@ -22,21 +23,30 @@ public class RandomPlayer extends Player {
     @Override
     public Move getMove(Board board) {
         long allPossibleMoves = gamemanager.getCurrentGame().board.generateAllPossibleMoves(color == Constants.PLAYER_COLOR.WHITE);
-
+        MoveStatistics moveStatistics = new MoveStatistics(
+            -1,
+            null,
+            0,
+            0
+        );
         if (allPossibleMoves != 0L) {
 
             List<Integer> moveIndices = getMoveIndices(allPossibleMoves);
 
 
-            return new Move(
+            Move move = new Move(
                     this.color,
                     moveIndices.get((int) (Math.random() * moveIndices.size())),
                     1,
                     this.type
             );
+            move.setStatistics(moveStatistics);
+            return move;
         } else {
             LOGGER.info("RandomPlayer {} is passing because all possible moves are {}", this.color, allPossibleMoves);
-            return new Move(this.color, -1, -1, this.type);
+            Move move = new Move(this.color, -1, -1, this.type);
+            move.setStatistics(moveStatistics);
+            return move;
         }
 
 

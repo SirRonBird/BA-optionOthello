@@ -4,15 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
-import com.mcgreedy.optionothello.ui.OptionsUI;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class OptionTest {
+class OptionJsTest {
 
   @Test
   void testOptionExecution() {
@@ -36,12 +34,12 @@ class OptionTest {
         + "    return board.isGameOver();\n"
         + "}";
 
-    Option testOption = new Option(initSet, testPolicy, testTerminationCondition);
+    Option_js testOptionJs = new Option_js(initSet, testPolicy, testTerminationCondition);
     Move testMove = new Move(PLAYER_COLOR.BLACK,10,-1, PLAYER_TYPE.O_MCTS);
-    double policyReturn = testOption.executePolicy(testStartBoard, testMove);
+    double policyReturn = testOptionJs.executePolicy(testStartBoard, testMove);
     assertEquals(policyReturn, 1.0);
 
-    boolean terminationReturn = testOption.checkTermination(new Board(-1L, 0L));
+    boolean terminationReturn = testOptionJs.checkTermination(new Board(-1L, 0L));
     assertEquals(terminationReturn, true);
 
 
@@ -53,10 +51,10 @@ class OptionTest {
     List<Board> initSet = new ArrayList<>();
     initSet.add(testStartBoard);
     String testPolicy = "function policy(board, move) { return 1.0;}";
-    Option testOption = new Option(initSet, testPolicy, "");
+    Option_js testOptionJs = new Option_js(initSet, testPolicy, "");
 
     Move testMove = new Move(PLAYER_COLOR.BLACK,10,-1, PLAYER_TYPE.O_MCTS);
-    double policyReturn = testOption.executePolicy(testStartBoard, testMove);
+    double policyReturn = testOptionJs.executePolicy(testStartBoard, testMove);
     assertEquals(policyReturn, 1.0);
   }
 

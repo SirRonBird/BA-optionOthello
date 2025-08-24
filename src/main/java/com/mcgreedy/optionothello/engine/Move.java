@@ -1,5 +1,7 @@
 package com.mcgreedy.optionothello.engine;
 
+import com.mcgreedy.optionothello.ai.Option;
+import com.mcgreedy.optionothello.ai.Option_js;
 import com.mcgreedy.optionothello.utils.Constants;
 
 import java.util.Objects;
@@ -8,11 +10,15 @@ public class Move {
 
     private Constants.PLAYER_COLOR color;
     private int position;
+
     private int searchDepth;
+    private Option option = null;
+    private int searchedNodes;
+    private long searchTime;
+
+    private MoveStatistics statistics;
 
     private Constants.PLAYER_TYPE playerType;
-    //Option option;
-
 
     public Move() {
         // default constructor needed for Jackson
@@ -23,7 +29,17 @@ public class Move {
         this.position = position;
         this.searchDepth = searchDepth;
         this.playerType = playerType;
+
     }
+
+    public MoveStatistics getStatistics() {
+        return statistics;
+    }
+
+    public void setStatistics(MoveStatistics statistics) {
+        this.statistics = statistics;
+    }
+
 
     public int getPosition() {
         return position;
@@ -41,7 +57,13 @@ public class Move {
         return color;
     }
 
+    public void setSearchDepth(int searchDepth) {
+        this.searchDepth = searchDepth;
+    }
 
+    public void setOption(Option option) {
+        this.option = option;
+    }
 
     @Override
     public String toString() {
@@ -66,4 +88,7 @@ public class Move {
         return Objects.hash(position, color);
     }
 
+    public Option getOption() {
+        return this.option;
+    }
 }

@@ -1,6 +1,7 @@
 package com.mcgreedy.optionothello.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mcgreedy.optionothello.dtos.SaveGameDTO.MoveStatistics;
 import com.mcgreedy.optionothello.utils.Constants;
 
 import java.util.List;
@@ -183,6 +184,8 @@ public class SaveTournamentDTO {
         private long blackBoardAfterMove;
         private long whiteBoardAfterMove;
 
+        private MoveStatistics moveStatistics;
+
         public Constants.PLAYER_COLOR getColor() {
             return color;
         }
@@ -229,6 +232,54 @@ public class SaveTournamentDTO {
 
         public void setWhiteBoardAfterMove(long whiteBoardAfterMove) {
             this.whiteBoardAfterMove = whiteBoardAfterMove;
+        }
+
+        public MoveStatistics getMoveStatistics() {
+            return moveStatistics;
+        }
+
+        public void setMoveStatistics(MoveStatistics moveStatistics) {
+            this.moveStatistics = moveStatistics;
+        }
+    }
+
+    public static class MoveStatistics {
+        private int searchDepth;
+        private int searchedNodes;
+        private OptionDTO option;
+        private long searchTime;
+
+
+        public int getSearchDepth() {
+            return searchDepth;
+        }
+
+        public void setSearchDepth(int searchDepth) {
+            this.searchDepth = searchDepth;
+        }
+
+        public long getSearchTime() {
+            return searchTime;
+        }
+
+        public void setSearchTime(long searchTime) {
+            this.searchTime = searchTime;
+        }
+
+        public OptionDTO getOption() {
+            return option;
+        }
+
+        public void setOption(OptionDTO option) {
+            this.option = option;
+        }
+
+        public int getSearchedNodes() {
+            return searchedNodes;
+        }
+
+        public void setSearchedNodes(int searchedNodes) {
+            this.searchedNodes = searchedNodes;
         }
     }
 }

@@ -10,6 +10,7 @@ public abstract class Player {
     protected Constants.PLAYER_TYPE type;
 
     protected Gamemanager gamemanager;
+    protected long searchTimeLimit = 0;
 
     protected Player(Constants.PLAYER_COLOR color, Constants.PLAYER_TYPE type, Gamemanager gamemanager) {
         this.color = color;
@@ -33,5 +34,9 @@ public abstract class Player {
                 "color=" + color +
                 ", type=" + type +
                 '}';
+    }
+
+    public void setSearchTime(long searchTimeLimit) {
+        this.searchTimeLimit = searchTimeLimit;
     }
 }

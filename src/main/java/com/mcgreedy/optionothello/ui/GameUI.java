@@ -5,19 +5,20 @@ import static com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import static com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import static com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPES;
 
-import com.mcgreedy.optionothello.ai.MCTSOptions;
+import com.mcgreedy.optionothello.ai.MCTSSettings;
 import com.mcgreedy.optionothello.ai.MCTSPlayer;
+import com.mcgreedy.optionothello.ai.OMCTSSettings;
 import com.mcgreedy.optionothello.ai.OMCTSPlayer;
 import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.ai.RandomPlayer;
-import com.mcgreedy.optionothello.dtos.OptionDTO;
-import com.mcgreedy.optionothello.engine.Board;
+import com.mcgreedy.optionothello.ai.options.CornerOption;
+import com.mcgreedy.optionothello.ai.options.RandomOption;
+import com.mcgreedy.optionothello.ai.options.StartOption;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants;
 import com.mcgreedy.optionothello.utils.GUIUtils;
-import com.mcgreedy.optionothello.utils.SaveGameUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -90,19 +91,46 @@ public class GameUI {
   Label whiteWins;
   Button blackSkipMove;
   Button whiteSkipMove;
-  ListView<OptionDTO> optionsList;
+  ListView<Option> whiteOptionsList;
+  ListView<Option> blackOptionsList;
 
   //Player Settings
   private ComboBox<String> blackPlayerTypeSelector;
   private ComboBox<String> whitePlayerTypeSelector;
 
   // MCTS Parameters
-  int mctsSimulationLimit = 500;
-  boolean mctsRaveEnabled = false;
-  boolean mctsMastEnabled = false;
-  TextField mctsExplorationParameterTextBox;
-  CheckBox mctsRAVEEnabledCheckBox;
-  CheckBox mctsMASTEnabledCheckBox;
+  TextField whiteMctsExplorationParameter;
+  TextField blackMctsExplorationParameter;
+  boolean isWhiteMctsRaveEnabled = false;
+  boolean isWhiteMctsMastEnabled = false;
+  boolean isBlackMctsRaveEnabled = false;
+  boolean isBlackMctsMastEnabled = false;
+  CheckBox whiteMctsRAVEEnabledCheckBox;
+  CheckBox whiteMctsMASTEnabledCheckBox;
+  CheckBox blackMctsRAVEEnabledCheckBox;
+  CheckBox blackMctsMASTEnabledCheckBox;
+
+  // OMCTS Parameters
+  TextField whiteOmctsExplorationParameter;
+  TextField blackOmctsExplorationParameter;
+  TextField blackOmctsDiscountFactorTextBox;
+  TextField whiteOmctsDiscountFactorTextBox;
+  CheckBox blackOmctsRAVEEnabledCheckBox;
+  CheckBox whiteOmctsRAVEEnabledCheckBox;
+  CheckBox blackOmctsMASTEnabledCheckBox;
+  CheckBox whiteOmctsMASTEnabledCheckBox;
+  boolean isBlackOmctsRaveEnabled = false;
+  boolean isWhiteOmctsRaveEnabled = false;
+  boolean isBlackOmctsMastEnabled = false;
+  boolean isWhiteOmctsMastEnabled = false;
+  List<Option> options = List.of(
+      new StartOption(),
+      new CornerOption(),
+      new RandomOption()
+  );
+
+  // Game Parameter
+  long searchTime=0;
 
   //Logger
   private static final Logger LOGGER = LogManager.getLogger(GameUI.class);
@@ -349,60 +377,58 @@ public class GameUI {
         }
       }
       case MCTS -> {
-        //TODO: needed Parameters
-        HBox mctsMaxSearchDepthBox = new HBox(10);
-        Label mctsMaxSearchDepthLabel = new Label("Simulation Limit:");
-        Label mctsSimulationLimitLabel = new Label("500");
-        Slider mctsSimulationLimitSlider = new Slider(1, 10000, 1000);
-        mctsSimulationLimitSlider.setShowTickLabels(false);
-        mctsSimulationLimitSlider.setShowTickMarks(false);
-        mctsSimulationLimitSlider.setMajorTickUnit(10);
-        mctsSimulationLimitSlider.setMinorTickCount(0);
-        mctsSimulationLimitSlider.setSnapToTicks(false);
-        mctsSimulationLimitSlider.setMaxWidth(Double.MAX_VALUE);
-        mctsSimulationLimitSlider.valueProperty().addListener(new ChangeListener<Number>() {
-          @Override
-          public void changed(ObservableValue<? extends Number> observable, Number oldValue,
-              Number newValue) {
-            mctsSimulationLimitLabel.textProperty().setValue(String.valueOf(newValue.intValue()));
-            mctsSimulationLimit = newValue.intValue();
-          }
-        });
-        mctsMaxSearchDepthBox.getChildren()
-            .addAll(mctsMaxSearchDepthLabel, mctsSimulationLimitLabel);
-
         HBox mctsExplorationParameterBox = new HBox(10);
         mctsExplorationParameterBox.setAlignment(Pos.CENTER_LEFT);
         Label mctsExplorationParameterLabel = new Label("Exploration:");
-        mctsExplorationParameterTextBox = new TextField("1.41");
-        mctsExplorationParameterTextBox.setEditable(true);
-        mctsExplorationParameterTextBox.setPromptText("Exploration Parameter");
+        mctsExplorationParameterBox.getChildren().add(mctsExplorationParameterLabel);
 
-        mctsExplorationParameterBox.getChildren()
-            .addAll(mctsExplorationParameterLabel, mctsExplorationParameterTextBox);
+        VBox mctsImprovementsBox = new VBox(5);
+        mctsImprovementsBox.setAlignment(Pos.CENTER_LEFT);
+        Label mctsImprovementsLabel = new Label("UCT Improvements:");
+        mctsImprovementsBox.getChildren().add(mctsImprovementsLabel);
 
-        VBox mctsSettingsBox = new VBox(5);
-        mctsSettingsBox.setAlignment(Pos.CENTER_LEFT);
-        Label mctsImprovementsLabel = new Label("Improvements:");
-        mctsMASTEnabledCheckBox = new CheckBox("MCTS MASTE Enabled");
-        mctsMASTEnabledCheckBox.setSelected(false);
-        mctsRAVEEnabledCheckBox = new CheckBox("MCTS RAVE Enabled");
-        mctsRAVEEnabledCheckBox.setSelected(false);
+        if(playerColor == PLAYER_COLOR.WHITE) {
+          //Exploration Parameter
+          whiteMctsExplorationParameter = new TextField("1.41");
+          whiteMctsExplorationParameter.setEditable(true);
+          whiteMctsExplorationParameter.setPromptText("Exploration Parameter");
+          mctsExplorationParameterBox.getChildren().add(whiteMctsExplorationParameter);
+          //UCT Improvements
+          whiteMctsMASTEnabledCheckBox = new CheckBox("MAST");
+          whiteMctsMASTEnabledCheckBox.setSelected(false);
+          whiteMctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            isWhiteMctsMastEnabled = newVal;
+          });
+          whiteMctsRAVEEnabledCheckBox = new CheckBox("RAVE");
+          whiteMctsRAVEEnabledCheckBox.setSelected(false);
+          whiteMctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            isWhiteMctsRaveEnabled = newVal;
+          });
+          mctsImprovementsBox.getChildren().addAll(whiteMctsMASTEnabledCheckBox,
+              whiteMctsRAVEEnabledCheckBox);
+        } else {
+          //Exploration Parameter
+          blackMctsExplorationParameter = new TextField("1.41");
+          blackMctsExplorationParameter.setEditable(true);
+          blackMctsExplorationParameter.setPromptText("Exploration Parameter");
+          mctsExplorationParameterBox.getChildren().add(blackMctsExplorationParameter);
+          //UCT Improvements
+          blackMctsMASTEnabledCheckBox = new CheckBox("MAST");
+          blackMctsMASTEnabledCheckBox.setSelected(false);
+          blackMctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            isBlackMctsMastEnabled = newVal;
+          });
+          blackMctsRAVEEnabledCheckBox = new CheckBox("RAVE");
+          blackMctsRAVEEnabledCheckBox.setSelected(false);
+          blackMctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            isBlackMctsRaveEnabled = newVal;
+          });
+          mctsImprovementsBox.getChildren().addAll(blackMctsMASTEnabledCheckBox,
+              blackMctsRAVEEnabledCheckBox);
+        }
 
-        mctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-          mctsMastEnabled = newVal;
-        });
 
-        mctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-          mctsRaveEnabled = newVal;
-        });
-
-        mctsSettingsBox.getChildren()
-            .addAll(mctsImprovementsLabel, mctsMASTEnabledCheckBox, mctsRAVEEnabledCheckBox);
-
-        box.getChildren()
-            .addAll(mctsMaxSearchDepthBox, mctsSimulationLimitSlider, mctsExplorationParameterBox,
-                mctsSettingsBox);
+        box.getChildren().addAll(mctsExplorationParameterBox,mctsImprovementsBox);
       }
       case RANDOM_AI -> {
         box.setAlignment(Pos.CENTER);
@@ -412,67 +438,106 @@ public class GameUI {
         HBox omctsExplorationParameterBox = new HBox(10);
         omctsExplorationParameterBox.setAlignment(Pos.CENTER);
         Label omctsExplorationParameterLabel = new Label("Exploration:");
-        TextField omctsExplorationParameter = new TextField("1.41");
-        omctsExplorationParameter.setEditable(true);
-        omctsExplorationParameter.setPromptText("Exploration Parameter");
+        omctsExplorationParameterBox.getChildren().add(omctsExplorationParameterLabel);
 
-        omctsExplorationParameterBox.getChildren()
-            .addAll(omctsExplorationParameterLabel, omctsExplorationParameter);
+        HBox omctsDiscountFactorBox = new HBox(10);
+        omctsDiscountFactorBox.setAlignment(Pos.CENTER);
+        Label omctsDiscountFactorLabel = new Label("DiscountFactor:");
+        omctsDiscountFactorBox.getChildren().addAll(omctsDiscountFactorLabel);
 
-        //TODO: Option List and possibility to create Options
+        VBox improvementsBox = new VBox(5);
+        Label improvementsLabel = new Label("UCT Improvements:");
+        improvementsBox.getChildren().add(improvementsLabel);
+
         VBox optionBox = new VBox(5);
         optionBox.setAlignment(Pos.CENTER);
         Label optionLabel = new Label("Options:");
+        optionBox.getChildren().add(optionLabel);
 
-        optionsList = createOptionsList();
+        if(playerColor == PLAYER_COLOR.WHITE){
+          //Exploration Parameter
+          whiteOmctsExplorationParameter = new TextField("1.41");
+          whiteOmctsExplorationParameter.setEditable(true);
+          whiteOmctsExplorationParameter.setPromptText("Exploration Parameter");
+          omctsExplorationParameterBox.getChildren().add(whiteOmctsExplorationParameter);
+          //DiscountFactor
+          whiteOmctsDiscountFactorTextBox = new TextField();
+          whiteOmctsDiscountFactorTextBox.setEditable(true);
+          whiteOmctsDiscountFactorTextBox.setPromptText("Omcts Discount");
+          whiteOmctsDiscountFactorTextBox.setText("0.4");
+          omctsDiscountFactorBox.getChildren().addAll(whiteOmctsDiscountFactorTextBox);
+          //Improvements to UCT
+          whiteOmctsMASTEnabledCheckBox = new CheckBox("MAST Enabled");
+          whiteOmctsMASTEnabledCheckBox.setSelected(false);
+          whiteOmctsRAVEEnabledCheckBox = new CheckBox("RAVE Enabled");
+          whiteOmctsRAVEEnabledCheckBox.setSelected(false);
+          whiteOmctsMASTEnabledCheckBox.selectedProperty().addListener((_, _, newVal) ->
+              isWhiteOmctsMastEnabled = newVal);
+          whiteOmctsRAVEEnabledCheckBox.selectedProperty().addListener((_, _, newVal)
+              -> isWhiteOmctsRaveEnabled = newVal);
+          improvementsBox.getChildren().addAll(whiteOmctsMASTEnabledCheckBox,
+              whiteOmctsRAVEEnabledCheckBox);
+          //Option list
+          whiteOptionsList = createOptionsList();
+          optionBox.getChildren().addAll(whiteOptionsList);
+        } else {
+          //Exploration Parameter
+          blackOmctsExplorationParameter = new TextField("1.41");
+          blackOmctsExplorationParameter.setEditable(true);
+          blackOmctsExplorationParameter.setPromptText("Exploration Parameter");
+          omctsExplorationParameterBox.getChildren().add(blackOmctsExplorationParameter);
+          //DiscountFactor
+          blackOmctsDiscountFactorTextBox = new TextField();
+          blackOmctsDiscountFactorTextBox.setEditable(true);
+          blackOmctsDiscountFactorTextBox.setPromptText("Omcts Discount");
+          blackOmctsDiscountFactorTextBox.setText("0.4");
+          omctsDiscountFactorBox.getChildren().add(blackOmctsDiscountFactorTextBox);
+          //Improvements to UCT
+          blackOmctsMASTEnabledCheckBox = new CheckBox("MAST Enabled");
+          blackOmctsMASTEnabledCheckBox.setSelected(false);
+          blackOmctsRAVEEnabledCheckBox = new CheckBox("RAVE Enabled");
+          blackOmctsRAVEEnabledCheckBox.setSelected(false);
+          blackOmctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            isBlackOmctsMastEnabled = newVal;
+          });
+          blackOmctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            isBlackOmctsRaveEnabled = newVal;
+          });
+          improvementsBox.getChildren().addAll(blackOmctsMASTEnabledCheckBox,
+              blackOmctsRAVEEnabledCheckBox);
+          //Option list
+          blackOptionsList = createOptionsList();
+          optionBox.getChildren().addAll(blackOptionsList);
+        }
 
-        Button addOptionButton = new Button("Add Option");
-        addOptionButton.setPrefWidth(200);
-        addOptionButton.setOnAction(e -> {
-          MainGUI.goToOptionsTab();
-        });
-
-        optionBox.getChildren().addAll(optionLabel, optionsList, addOptionButton);
-
-        box.getChildren().addAll(omctsExplorationParameterBox, optionBox);
-
+        box.getChildren().addAll(omctsExplorationParameterBox,omctsDiscountFactorBox,improvementsBox, optionBox);
       }
-
     }
 
     return box;
   }
 
-  private ListView<OptionDTO> createOptionsList(){
-    ListView<OptionDTO> optionsList = new ListView<>();
-    optionsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-    SaveGameUtils.loadSaveOptions();
-    optionsList.getItems().addAll(SaveGameUtils.getSaveOptions());
+  private ListView<Option> createOptionsList(){
+    ObservableList<Option> observableOptions = FXCollections.observableArrayList(options);
 
-    optionsList.setCellFactory(_ -> new ListCell<>(){
+    whiteOptionsList = new ListView<>(observableOptions);
+    whiteOptionsList.setCellFactory(listView -> new ListCell<>() {
       @Override
-      protected void updateItem(OptionDTO item, boolean empty) {
-        super.updateItem(item, empty);
-        if (empty || item == null) {
+      protected void updateItem(Option option, boolean empty) {
+        super.updateItem(option, empty);
+        if (empty || option == null) {
           setText(null);
-          setGraphic(null);
-          setStyle(null);
         } else {
-          setStyle("-fx-padding: 5;");
-          setGraphic(createOptionDetailItem(item));
+          setText(option.getName());
         }
       }
     });
 
-    return optionsList;
+    whiteOptionsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+    return whiteOptionsList;
   }
 
-  private Label createOptionDetailItem(OptionDTO item) {
-    Label titleLabel = new Label(item.getName());
-    titleLabel.setStyle("-fx-font-size: 12px;");
-
-    return titleLabel;
-  }
 
   private void playerSkipMove(PLAYER_COLOR playerColor) {
     HumanPlayer player = (HumanPlayer) gameManager.getCurrentPlayer();
@@ -617,11 +682,43 @@ public class GameUI {
         new Label(whitePlayer.toString())
     );
 
+    content.getChildren().add(new Separator(Orientation.HORIZONTAL));
+
+
+    HBox searchTimeBox = new HBox(10);
+    Label searchTimeLabel = new Label("Search time 1s + ");
+    Label sLabel = new Label("s");
+    Slider searchTimeSlider = new Slider();
+    searchTimeSlider.setMin(0);
+    searchTimeSlider.setMax(59);
+    searchTimeSlider.setShowTickLabels(true);
+    searchTimeSlider.setShowTickMarks(true);
+    searchTimeSlider.setSnapToTicks(true);
+    searchTimeSlider.setMajorTickUnit(5);
+    searchTimeSlider.setMinorTickCount(1);
+    searchTimeSlider.setPrefWidth(200);
+    searchTimeSlider.setStyle("-fx-font-weight: Bold;");
+    searchTimeSlider.valueProperty().addListener(
+        new ChangeListener<Number>() {
+          @Override
+          public void changed(ObservableValue<? extends Number> observable, Number oldValue,
+              Number newValue) {
+            searchTime = newValue.longValue();
+          }
+        }
+    );
+
+    searchTimeBox.getChildren().addAll(searchTimeLabel, searchTimeSlider, sLabel);
+
+    content.getChildren().addAll(searchTimeBox);
+
     dialog.getDialogPane().setContent(content);
 
     Optional<ButtonType> result = dialog.showAndWait();
     result.ifPresent(button -> {
       if (button == startButtonType) {
+        blackPlayer.setSearchTime(searchTime);
+        whitePlayer.setSearchTime(searchTime);
         gameManager.newGame(
             Objects.requireNonNull(blackPlayer),
             Objects.requireNonNull(whitePlayer)
@@ -706,17 +803,16 @@ public class GameUI {
         );
       }
       case MCTS -> {
-        MCTSOptions mctsOptions = new MCTSOptions(
-            mctsSimulationLimit,
-            Double.parseDouble(mctsExplorationParameterTextBox.getText()),
-            mctsRaveEnabled,
-            mctsMastEnabled
+        MCTSSettings mctsSettings = new MCTSSettings(
+            Double.parseDouble(blackMctsExplorationParameter.getText()),
+            isBlackMctsMastEnabled,
+            isBlackMctsRaveEnabled
         );
         return new MCTSPlayer(
             PLAYER_COLOR.BLACK,
             PLAYER_TYPE.MCTS,
             gameManager,
-            mctsOptions
+            mctsSettings
         );
       }
       case RANDOM_AI -> {
@@ -727,21 +823,21 @@ public class GameUI {
         );
       }
       case O_MCTS -> {
-        List<OptionDTO> selectedOptions = optionsList.getSelectionModel().getSelectedItems();
-        List<Option> options = new ArrayList<>();
-        for (OptionDTO optionDTO : selectedOptions) {
-          Option option = new Option(
-              SaveGameUtils.fromMaskDTO(optionDTO.getInitiationSet()),
-              optionDTO.getPolicy(),
-              optionDTO.getTerminationCondition()
-          );
-          options.add(option);
-        }
+        List<Option> selectedOptions = new ArrayList<>(blackOptionsList.getSelectionModel().getSelectedItems());
+
+        OMCTSSettings omctsSettings = new OMCTSSettings(
+            Double.parseDouble(blackOmctsDiscountFactorTextBox.getText()),
+            Double.parseDouble(blackOmctsExplorationParameter.getText()),
+            selectedOptions,
+            isBlackOmctsMastEnabled,
+            isBlackOmctsRaveEnabled
+        );
+
         return new OMCTSPlayer(
             PLAYER_COLOR.BLACK,
             PLAYER_TYPE.O_MCTS,
             gameManager,
-            options
+            omctsSettings
         );
       }
       default -> {
@@ -761,17 +857,16 @@ public class GameUI {
         );
       }
       case MCTS -> {
-        MCTSOptions mctsOptions = new MCTSOptions(
-            mctsSimulationLimit,
-            Double.parseDouble(mctsExplorationParameterTextBox.getText()),
-            mctsRaveEnabled,
-            mctsMastEnabled
+        MCTSSettings mctsSettings = new MCTSSettings(
+            Double.parseDouble(whiteMctsExplorationParameter.getText()),
+            isWhiteMctsMastEnabled,
+            isWhiteMctsRaveEnabled
         );
         return new MCTSPlayer(
             PLAYER_COLOR.WHITE,
             PLAYER_TYPE.MCTS,
             gameManager,
-            mctsOptions
+            mctsSettings
         );
       }
       case RANDOM_AI -> {
@@ -782,21 +877,20 @@ public class GameUI {
         );
       }
       case O_MCTS -> {
-        List<OptionDTO> selectedOptions = optionsList.getSelectionModel().getSelectedItems();
-        List<Option> options = new ArrayList<>();
-        for (OptionDTO optionDTO : selectedOptions) {
-          Option option = new Option(
-              SaveGameUtils.fromMaskDTO(optionDTO.getInitiationSet()),
-              optionDTO.getPolicy(),
-              optionDTO.getTerminationCondition()
-          );
-          options.add(option);
-        }
+        List<Option> selectedOptions = new ArrayList<>(whiteOptionsList.getSelectionModel().getSelectedItems());
+
+        OMCTSSettings omctsSettings = new OMCTSSettings(
+            Double.parseDouble(whiteOmctsDiscountFactorTextBox.getText()),
+            Double.parseDouble(whiteOmctsExplorationParameter.getText()),
+            selectedOptions,
+            isWhiteOmctsMastEnabled,
+            isWhiteOmctsRaveEnabled
+        );
         return new OMCTSPlayer(
             PLAYER_COLOR.WHITE,
             PLAYER_TYPE.O_MCTS,
             gameManager,
-            options
+            omctsSettings
         );
       }
       default -> {

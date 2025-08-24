@@ -1,6 +1,10 @@
 package com.mcgreedy.optionothello.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mcgreedy.optionothello.ai.Option;
+import com.mcgreedy.optionothello.ai.Option_js;
+import com.mcgreedy.optionothello.utils.SaveGameUtils;
+import java.util.ArrayList;
 import java.util.List;
 
 public class OptionDTO {
@@ -11,19 +15,11 @@ public class OptionDTO {
   @JsonProperty("initiationSet")
   private List<BoardMaskDTO> initiationSet;
 
-  @JsonProperty("policy")
-  private String policy;
-
-  @JsonProperty("terminationCondition")
-  private String terminationCondition;
-
   public OptionDTO() {}
 
-  public OptionDTO(String name,List<BoardMaskDTO> initiationSet, String policy, String terminationCondition) {
+  public OptionDTO(String name,List<BoardMaskDTO> initiationSet) {
     this.name = name;
     this.initiationSet = initiationSet;
-    this.policy = policy;
-    this.terminationCondition = terminationCondition;
   }
 
 
@@ -35,21 +31,6 @@ public class OptionDTO {
     this.initiationSet = initiationSet;
   }
 
-  public String getPolicy() {
-    return policy;
-  }
-
-  public void setPolicy(String policy) {
-    this.policy = policy;
-  }
-
-  public String getTerminationCondition() {
-    return terminationCondition;
-  }
-
-  public void setTerminationCondition(String terminationCondition) {
-    this.terminationCondition = terminationCondition;
-  }
 
   public String getName() {
     return name;
@@ -70,8 +51,22 @@ public class OptionDTO {
       this.mask = mask;
       this.name = name;
     }
+  }
 
+  public static OptionDTO fromOption(Option option) {
 
+    if (option == null){
+      return new OptionDTO(
+          "noOption",
+          new ArrayList<>()
+      );
+    } else {
+
+      return new OptionDTO(
+          option.getName(),
+          SaveGameUtils.toMaskDTO(option.initiationSet())
+      );
+    }
   }
 
 }

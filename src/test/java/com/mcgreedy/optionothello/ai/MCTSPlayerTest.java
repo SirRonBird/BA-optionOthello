@@ -22,8 +22,7 @@ class MCTSPlayerTest {
         Constants.PLAYER_TYPE type = Constants.PLAYER_TYPE.MCTS;
         Gamemanager dummyManager = null; // Falls nicht gebraucht
 
-        MCTSOptions options = new MCTSOptions(
-                1000,
+        MCTSSettings options = new MCTSSettings(
                 1.41,
             false,
             false

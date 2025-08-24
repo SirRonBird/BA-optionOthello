@@ -1,14 +1,12 @@
 package com.mcgreedy.optionothello.utils;
 
-import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.core.StreamWriteConstraints;
-import com.fasterxml.jackson.core.exc.StreamWriteException;
-import com.fasterxml.jackson.databind.DatabindException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mcgreedy.optionothello.ai.Option;
+import com.mcgreedy.optionothello.ai.Option_js;
 import com.mcgreedy.optionothello.dtos.OptionDTO;
 import com.mcgreedy.optionothello.dtos.OptionDTO.BoardMaskDTO;
 import com.mcgreedy.optionothello.dtos.SaveGameDTO;
+import com.mcgreedy.optionothello.dtos.SaveGameDTO.MoveStatistics;
 import com.mcgreedy.optionothello.dtos.SaveTournamentDTO;
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Game;
@@ -97,11 +95,21 @@ public class SaveGameUtils {
                 moveDetails.setColor(move.getColor());
                 moveDetails.setPosition(move.getPosition());
                 moveDetails.setSearchDepth(move.getSearchDepth());
+
                 moveDetails.setPlayerType(move.getPlayerType());
                 moveDetails.setBlackBoardAfterMove(board.getBlack());
                 moveDetails.setWhiteBoardAfterMove(board.getWhite());
 
+                MoveStatistics statistics = new SaveGameDTO.MoveStatistics();
+                com.mcgreedy.optionothello.engine.MoveStatistics moveStatistics  = move.getStatistics();
 
+                statistics.setSearchDepth(moveStatistics.getSearchDepth());
+                statistics.setSearchTime(moveStatistics.getSearchTime());
+                statistics.setSearchedNodes(moveStatistics.getSearchedNodes());
+
+                statistics.setOption(OptionDTO.fromOption(moveStatistics.getOption()));
+
+                moveDetails.setMoveStatistics(statistics);
 
                 moveDetailsList.add(moveDetails);
             }
@@ -286,6 +294,17 @@ public class SaveGameUtils {
                 moveDetails.setBlackBoardAfterMove(board.getBlack());
                 moveDetails.setWhiteBoardAfterMove(board.getWhite());
 
+                SaveTournamentDTO.MoveStatistics statistics = new SaveTournamentDTO.MoveStatistics();
+                com.mcgreedy.optionothello.engine.MoveStatistics moveStatistics = move.getStatistics();
+
+                statistics.setSearchDepth(moveStatistics.getSearchDepth());
+                statistics.setSearchTime(moveStatistics.getSearchTime());
+                statistics.setSearchedNodes(moveStatistics.getSearchedNodes());
+
+                statistics.setOption(OptionDTO.fromOption(moveStatistics.getOption()));
+
+                moveDetails.setMoveStatistics(statistics);
+
                 moveDetailsList.add(moveDetails);
             }
             currentGameDetails.setMoves(moveDetailsList);
@@ -309,29 +328,6 @@ public class SaveGameUtils {
         }
     }
 
-    public static void saveOption(Option option, String name){
-        try{
-            String projectDir = System.getProperty("user.dir");
-            File directory = new File(projectDir,"options/");
-            if(!directory.exists()){
-                directory.mkdirs();
-            }
-            String filename = name + ".json";
-            File file = new File(directory, filename);
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            OptionDTO optionDTO = new OptionDTO(
-                name,
-                toMaskDTO(option.getInitiationSet()),
-                option.getPolicy(),
-                option.getTerminationCondition());
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, optionDTO);
-            LOGGER.info("Saved option to file {}", filename);
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-        }
-        loadSaveOptions();
-    }
 
     public static List<BoardMaskDTO> toMaskDTO(List<Board> boards) {
         List<BoardMaskDTO> boardMaskDTOs = new ArrayList<>();

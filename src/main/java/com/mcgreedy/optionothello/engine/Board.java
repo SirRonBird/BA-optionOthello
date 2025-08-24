@@ -31,8 +31,8 @@ public class Board {
     static final long START_WHITE = 0x0000001008000000L;
     static final long START_BLACK = 0x0000000810000000L;
 
-    /*static final long START_WHITE = -1082908604159952644L;
-    static final long START_BLACK = 1010851010122024706L;*/
+    /*static final long START_WHITE = 2076L;
+    static final long START_BLACK = 11320813181403648L;*/
 
     public long startWhite = START_WHITE;
     public long startBlack = START_BLACK;
@@ -217,4 +217,12 @@ public class Board {
 
     public int getWhiteCount(){ return Long.bitCount(white); }
     public int getBlackCount(){ return Long.bitCount(black); }
+
+    public int getValue(boolean forWhite) {
+        if(forWhite){
+            return getWhiteCount() - getBlackCount();
+        } else {
+            return getBlackCount() - getWhiteCount();
+        }
+    }
 }

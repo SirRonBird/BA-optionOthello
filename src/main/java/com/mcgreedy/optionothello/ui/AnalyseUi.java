@@ -189,7 +189,7 @@ public class AnalyseUi {
         .addListener((_, _, newGame) -> {
           if (newGame != null) {
             GameAnalysisUI.showGameAnalysis(newGame);
-            GameStatisicsUI.showGameStatistics(newGame);
+            GameStatisticsUI.showGameStatistics(newGame);
           }
         });
 

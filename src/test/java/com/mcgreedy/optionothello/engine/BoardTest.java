@@ -162,4 +162,11 @@ class BoardTest {
         assertFalse(movesBlack.isEmpty());
         assertFalse(movesWhite.isEmpty());
     }
+
+    @Test
+    void mysteriousBitFlip(){
+        Board board = new Board(240786604032L,134217728L);
+
+
+    }
 }

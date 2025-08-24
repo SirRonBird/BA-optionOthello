@@ -126,6 +126,7 @@ public class SaveGameDTO {
         private long blackBoardAfterMove;
         private long whiteBoardAfterMove;
 
+        private MoveStatistics moveStatistics;
 
         public Constants.PLAYER_COLOR getColor() {
             return color;
@@ -175,9 +176,54 @@ public class SaveGameDTO {
             this.whiteBoardAfterMove = whiteBoardAfterMove;
         }
 
+        public MoveStatistics getMoveStatistics() {
+            return moveStatistics;
+        }
+
+        public void setMoveStatistics(MoveStatistics moveStatistics) {
+            this.moveStatistics = moveStatistics;
+        }
 
 
     }
 
+    public static class MoveStatistics {
+        private int searchDepth;
+        private int searchedNodes;
+        private OptionDTO option;
+        private long searchTime;
 
+
+        public int getSearchDepth() {
+            return searchDepth;
+        }
+
+        public void setSearchDepth(int searchDepth) {
+            this.searchDepth = searchDepth;
+        }
+
+        public long getSearchTime() {
+            return searchTime;
+        }
+
+        public void setSearchTime(long searchTime) {
+            this.searchTime = searchTime;
+        }
+
+        public OptionDTO getOption() {
+            return option;
+        }
+
+        public void setOption(OptionDTO option) {
+            this.option = option;
+        }
+
+        public int getSearchedNodes() {
+            return searchedNodes;
+        }
+
+        public void setSearchedNodes(int searchedNodes) {
+            this.searchedNodes = searchedNodes;
+        }
+    }
 }

@@ -1,9 +1,8 @@
 package com.mcgreedy.optionothello.ui;
 
 import static com.mcgreedy.optionothello.utils.Constants.BOARD_SIZE;
-import com.mcgreedy.optionothello.ai.Option;
+import com.mcgreedy.optionothello.ai.Option_js;
 import com.mcgreedy.optionothello.dtos.OptionDTO;
-import com.mcgreedy.optionothello.dtos.OptionDTO.BoardMaskDTO;
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.utils.GUIUtils;
 import com.mcgreedy.optionothello.utils.SaveGameUtils;
@@ -147,34 +146,6 @@ public class OptionsUI {
     private ListView<OptionDTO> createOptionListView(){
         ListView<OptionDTO> listView = new ListView<>();
         listView.setPrefHeight(650);
-
-        listView.setCellFactory(_ -> new ListCell<>() {
-            @Override
-            protected void updateItem(OptionDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setGraphic(null);
-                    setStyle(null);
-                } else {
-                    setStyle("-fx-padding: 5;");
-                    setGraphic(createOptionDetailItem(item));
-                }
-            }
-        });
-        listView.getSelectionModel().selectedItemProperty().addListener(
-            (_,_,option) -> {
-                if(option != null) {
-                    //get information from dto to show in GUI
-                    maskBoards.clear();
-                    maskBoards.addAll(SaveGameUtils.fromMaskDTO(option.getInitiationSet()));
-                    updateBoardsListView();
-                    policyEditor.setCode(option.getPolicy());
-                    terminationEditor.setCode(option.getTerminationCondition());
-                }
-            }
-        );
-
 
         return listView;
     }
@@ -497,11 +468,10 @@ public class OptionsUI {
     }
 
     private void saveOption(){
-        Option newOption = new Option(
+        Option_js newOptionJs = new Option_js(
           maskBoards, policyEditor.getCode(), terminationEditor.getCode()
         );
         String name = Objects.equals(optionName.getText(), "") ? "New Option" : optionName.getText();
-        SaveGameUtils.saveOption(newOption,name);
         updateOptionListView();
     }
 
