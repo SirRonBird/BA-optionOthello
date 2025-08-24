@@ -12,9 +12,11 @@ import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
@@ -28,13 +30,10 @@ public class OMCTSPlayer extends Player {
   List<Option> options;
   List<Option> expandedOptions = new ArrayList<>(); //m
   Node currentNode; //s
-
   OMCTSSettings settings;
   static double explorationConstant;
 
-
   Random rand = new Random();
-
   int nodeCounter=0;
 
   public OMCTSPlayer(PLAYER_COLOR color,
@@ -53,7 +52,7 @@ public class OMCTSPlayer extends Player {
   @Override
   public Move getMove(Board board) {
     Node root = new Node(null, null, board, color, -1);
-    Node newNode = new Node(null,null,new Board(), color, -2);
+    Node newNode = root;
     root.availableOptions.clear();
     nodeCounter = 0;
 
@@ -92,7 +91,7 @@ public class OMCTSPlayer extends Player {
           }
         });
 
-        LOGGER.info("Expanded Options: {}; Available Option: {}; Options {};", expandedOptions.size(), currentNode.availableOptions.size(), options.size());
+        //LOGGER.debug("Expanded Options: {}; Available Option: {}; Options {};", expandedOptions.size(), currentNode.availableOptions.size(), options.size());
 
         //if options == availableOptions(m)
         if (new HashSet<>(expandedOptions).containsAll(currentNode.availableOptions)) {
@@ -123,9 +122,12 @@ public class OMCTSPlayer extends Player {
       }
       //rollout -> delta
       nodeCounter++;
-      int delta = rollOut(newNode);
+      //int delta = rollOut(newNode);
       //backup delta to parent nodes
-      backUp(newNode, delta);
+      //backUp(newNode, delta);
+
+      RolloutResult result = rollOut(newNode);
+      backUp(newNode,result.value,result.movesInRollout);
     }
     //LOGGER.info("Max depth: {}", findMaxDepth(root));
     Move bestMove =  getBestAction(root);
@@ -186,7 +188,7 @@ public class OMCTSPlayer extends Player {
       );
     }
     Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
-        c -> c.value
+        c -> c.value / (c.visits + 1e-6)
     )).orElse(state.children.get(rand.nextInt(state.children.size())));
     Move bestMove = selectedChild.move;
     bestMove.setOption(selectedChild.optionFollowed);
@@ -195,13 +197,36 @@ public class OMCTSPlayer extends Player {
 
   private Node selectChild(List<Node> children) {
     //LOGGER.info("Child selection");
-    return children.stream().max(Comparator.comparingDouble(OMCTSPlayer::uctValue)).orElse(children.get(rand.nextInt(children.size())));
+
+    //return children.stream().max(Comparator.comparingDouble(OMCTSPlayer::uctValue)).orElse(children.get(rand.nextInt(children.size())));
+    return children.stream().max((c1,c2) -> Double.compare(uct(c1), uct(c2)))
+        .orElse(children.get(rand.nextInt(children.size())));
   }
 
-  private static double uctValue(Node child) {
-    double exploration = explorationConstant * Math.sqrt((2 * Math.log(child.parent.visits)) / child.visits);
-    return child.value + exploration;
+  private double uct(Node child){
+    double winrate = child.value / (child.visits + 1e-6);
+    double exploration = explorationConstant * Math.sqrt(2 * Math.log(child.parent.visits + 1) / (child.visits + 1e-6));
+
+    if(settings.useRave() && child.move != null){
+      Move move = child.move;
+      int raveN = child.parent.raveVisits.getOrDefault(move,0);
+      double raveW = child.parent.raveValues.getOrDefault(move,0.0);
+      double amaf = (raveN > 0) ? raveW / raveN: 0.0;
+      double beta = Math.sqrt(1000.0 / (3.0 * child.visits + 1000.0));
+
+      double raveValue = (1 - beta) * (winrate + exploration) + beta * amaf;
+      LOGGER.info("RAVE Value: {}", raveValue);
+      return raveValue;
+    }
+
+    return winrate + exploration;
   }
+
+  /*private static double uctValue(Node child) {
+    double winrate = child.wins / (child.visits + 1e-6);
+    double exploration = explorationConstant * Math.sqrt((2 * Math.log(child.parent.visits + 1)) / (child.visits + 1e-6));
+    return winrate + exploration;
+  }*/
 
   private boolean stop(Board board) {
     return board.isGameOver();
@@ -232,7 +257,7 @@ public class OMCTSPlayer extends Player {
         parent.depth+1);
   }
 
-  private int rollOut(Node start) {
+  /*private int rollOut(Node start) {
     //simulate until stop (end of game or max search depth is reached)
     //LOGGER.info("Rollout from {} with board", start.depth);
     int simulationDepth = start.depth + 1;
@@ -257,30 +282,75 @@ public class OMCTSPlayer extends Player {
         //get moves from option
         Move newMove = getAction(currentSimNode.optionFollowed, currentSimNode);
         currentSimNode = expand(currentSimNode, newMove);
-        simColor = toggleColor(simColor);
       }
+      simColor = toggleColor(simColor);
       simulationDepth++;
     }
     return currentSimNode.board.getValue(start.color == WHITE);
+  }*/
+
+  private RolloutResult rollOut(Node start){
+    int simulationDepth = start.depth +1;
+    PLAYER_COLOR simColor = start.color;
+    Node currentSimNode = start;
+    List<Move> movesInRollout = new ArrayList<>();
+
+    while(!currentSimNode.board.isGameOver()){
+      List<Move> moves = currentSimNode.board.generateMovesAsList(simColor == WHITE, simulationDepth, PLAYER_TYPE.O_MCTS);
+
+      Move chosenMove;
+      if (moves.isEmpty()) {
+        chosenMove = new Move(simColor, -1, simulationDepth, PLAYER_TYPE.O_MCTS);
+      } else if (currentSimNode.hasFinishedOption()) {
+        chosenMove = moves.get(rand.nextInt(moves.size()));
+      } else {
+        chosenMove = getAction(currentSimNode.optionFollowed, currentSimNode);
+      }
+
+      movesInRollout.add(chosenMove);
+      currentSimNode = expand(currentSimNode, chosenMove);
+      simColor = toggleColor(simColor);
+      simulationDepth++;
+    }
+
+    return new RolloutResult(currentSimNode.board.getValue(start.color == WHITE), movesInRollout);
+  }
+
+  private void backUp(Node start, int delta, List<Move> movesInRollout){
+    int d_sprime = start.depth;
+
+    for(Node n = start; n != null; n = n.parent){
+      n.visits++;
+      int depthDiff = d_sprime - n.depth;
+      double discountedDelta = delta * Math.pow(settings.discountFactor(), depthDiff);
+      n.value += discountedDelta;
+
+      if(settings.useRave()){
+        for(Move m: movesInRollout){
+          n.raveVisits.put(m,n.raveVisits.getOrDefault(m,0) +1);
+          n.raveValues.put(m,n.raveValues.getOrDefault(m,0.0)+discountedDelta);
+        }
+      }
+    }
   }
 
   private PLAYER_COLOR toggleColor(PLAYER_COLOR color) {
     return (color == WHITE) ? BLACK : WHITE;
   }
 
-  private void backUp(Node start, int delta) {
+  /*private void backUp(Node start, int delta) {
+    int d_sprime = start.depth;  // Tiefe des Rollout-Endknotens
 
-    for(Node n = start; n != null;n=n.parent ){
+    for(Node n = start; n != null; n = n.parent) {
       n.visits++;
 
-      if(n.color == color){
-        n.value += delta + Math.pow(settings.discountFactor(),n.depth);
-      } else {
-        n.value -= delta + Math.pow(settings.discountFactor(),n.depth);
-      }
+      // Diskontierung abhängig von Tiefe
+      int depthDiff = d_sprime - n.depth;
+      double discountedDelta = delta * Math.pow(settings.discountFactor(), depthDiff);
 
+      n.value += discountedDelta;
     }
-  }
+  }*/
 
   @Override
   public String toString() {
@@ -310,6 +380,10 @@ public class OMCTSPlayer extends Player {
     double value;
     int wins = 0;
 
+    // RAVE Statistiken
+    Map<Move, Integer> raveVisits = new HashMap<>();
+    Map<Move, Double> raveValues = new HashMap<>();
+
     Node(Node parent, Move move, Board board, PLAYER_COLOR color, int depth) {
       this.parent = parent;
       this.move = move;
@@ -326,7 +400,7 @@ public class OMCTSPlayer extends Player {
     }
 
     public boolean hasFinishedOption() {
-      LOGGER.info("option Followed: {}", this.optionFollowed);
+      //LOGGER.debug("option Followed: {}", this.optionFollowed);
       if (this.optionFollowed == null) {
         return true;
       } else {
@@ -337,18 +411,17 @@ public class OMCTSPlayer extends Player {
 
     @Override
     public String toString() {
-      /*return "Node{\n" +
-          *//*", optionFollowed=" + optionFollowed +*//*
-          ", availableOptions=" + availableOptions.size() +
-          "\n, move=" + move +
-          "\n, board=" + board +
-          "\n, color=" + color +
-          "\n, depth=" + depth +
-          "\n, value=" + value +
-          "\nchildren=" + children +
-          "\n }";*/
       return "[ Node (" + number + ") [" + depth + "]\n" + children;
     }
   }
 
+  private static class RolloutResult {
+    int value;
+    List<Move> movesInRollout;
+
+    RolloutResult(int value, List<Move> movesInRollout) {
+      this.value = value;
+      this.movesInRollout = movesInRollout;
+    }
+  }
 }

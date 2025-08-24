@@ -45,7 +45,7 @@ public class StartOption implements Option {
 
   @Override
   public List<Board> initiationSet() {
-    return List.of();
+    return initiationSet;
   }
 
   @Override
