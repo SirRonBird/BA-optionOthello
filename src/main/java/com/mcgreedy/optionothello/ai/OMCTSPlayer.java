@@ -46,7 +46,7 @@ public class OMCTSPlayer extends Player {
     this.options = settings.optionList();
     explorationConstant = settings.explorationConstant();
     this.currentNode = null;
-    LOGGER.info("OMCTS player created: {}", this);
+    LOGGER.info("Created OMCTSPlayer with settings: {}", settings);
   }
 
   @Override
@@ -127,7 +127,7 @@ public class OMCTSPlayer extends Player {
       //backUp(newNode, delta);
 
       RolloutResult result = rollOut(newNode);
-      backUp(newNode,result.value,result.movesInRollout);
+      backUp(newNode,result.value,result.movesInRollout, result.winner);
     }
     //LOGGER.info("Max depth: {}", findMaxDepth(root));
     Move bestMove =  getBestAction(root);
@@ -204,29 +204,29 @@ public class OMCTSPlayer extends Player {
   }
 
   private double uct(Node child){
-    double winrate = child.value / (child.visits + 1e-6);
-    double exploration = explorationConstant * Math.sqrt(2 * Math.log(child.parent.visits + 1) / (child.visits + 1e-6));
+    // Q-Wert = kumulativer Reward / Besuche
+    double qValue = child.wins / (child.visits + 1e-6);
 
-    if(settings.useRave() && child.move != null){
-      Move move = child.move;
-      int raveN = child.parent.raveVisits.getOrDefault(move,0);
-      double raveW = child.parent.raveValues.getOrDefault(move,0.0);
-      double amaf = (raveN > 0) ? raveW / raveN: 0.0;
-      double beta = Math.sqrt(10 / (3.0 * child.visits + 10));
+    // Standard UCT-Exploration
+    double exploration = settings.explorationConstant() *
+        Math.sqrt(2 * Math.log(child.parent.visits + 1) / (child.visits + 1e-6));
 
-      double raveValue = (1 - beta) * (winrate + exploration) + beta * amaf;
-      LOGGER.info("RAVE Value: {}", raveValue);
-      return raveValue;
+    if (settings.useRave() && child.move != null) {
+      // RAVE-Wert = kumulativer AMA-Faktor / Anzahl der AMA-Besuche
+      int raveN = child.raveVisits.getOrDefault(child.move, 0);
+      double raveW = child.raveValues.getOrDefault(child.move, 0.0);
+      double amaf = (raveN > 0) ? raveW / raveN : 0.0;
+
+      // Beta-Mischung zwischen qValue und AMA-Faktor
+      double k = 1000.0; // wie beim MCTS
+      double beta = Math.sqrt(k / (3.0 * child.visits + k));
+
+      double mixedValue = (1 - beta) * qValue + beta * amaf;
+      return mixedValue + exploration;
     }
 
-    return winrate + exploration;
+    return qValue + exploration;
   }
-
-  /*private static double uctValue(Node child) {
-    double winrate = child.wins / (child.visits + 1e-6);
-    double exploration = explorationConstant * Math.sqrt((2 * Math.log(child.parent.visits + 1)) / (child.visits + 1e-6));
-    return winrate + exploration;
-  }*/
 
   private boolean stop(Board board) {
     return board.isGameOver();
@@ -257,38 +257,6 @@ public class OMCTSPlayer extends Player {
         parent.depth+1);
   }
 
-  /*private int rollOut(Node start) {
-    //simulate until stop (end of game or max search depth is reached)
-    //LOGGER.info("Rollout from {} with board", start.depth);
-    int simulationDepth = start.depth + 1;
-    PLAYER_COLOR simColor = start.color;
-
-    Node currentSimNode =start;
-
-    while (!currentSimNode.board.isGameOver()){
-      List<Move> moves = currentSimNode.board.generateMovesAsList(simColor == WHITE, simulationDepth,PLAYER_TYPE.O_MCTS);
-
-      if (moves.isEmpty()) {
-        //No moves possible need to pass
-        Move passMove = new Move(simColor, -1, simulationDepth, PLAYER_TYPE.O_MCTS);
-        currentSimNode = expand(currentSimNode, passMove);
-        simColor = toggleColor(simColor);
-        continue;
-      }
-      if(currentSimNode.hasFinishedOption()){
-        Move newMove = moves.get(rand.nextInt(moves.size()));
-        currentSimNode = expand(currentSimNode, newMove);
-      } else {
-        //get moves from option
-        Move newMove = getAction(currentSimNode.optionFollowed, currentSimNode);
-        currentSimNode = expand(currentSimNode, newMove);
-      }
-      simColor = toggleColor(simColor);
-      simulationDepth++;
-    }
-    return currentSimNode.board.getValue(start.color == WHITE);
-  }*/
-
   private RolloutResult rollOut(Node start){
     int simulationDepth = start.depth +1;
     PLAYER_COLOR simColor = start.color;
@@ -312,23 +280,39 @@ public class OMCTSPlayer extends Player {
       simColor = toggleColor(simColor);
       simulationDepth++;
     }
-
-    return new RolloutResult(currentSimNode.board.getValue(start.color == WHITE), movesInRollout);
+    PLAYER_COLOR winner = currentSimNode.board.getWinner();
+    return new RolloutResult(currentSimNode.board.getValue(start.color == WHITE),
+        movesInRollout, winner);
   }
 
-  private void backUp(Node start, int delta, List<Move> movesInRollout){
+  private void backUp(Node start, int delta, List<Move> movesInRollout, PLAYER_COLOR winner) {
     int d_sprime = start.depth;
 
-    for(Node n = start; n != null; n = n.parent){
+    for (Node n = start; n != null; n = n.parent) {
       n.visits++;
+
+      // ±1 Reward wie im MCTS
+      if (winner == this.color) {
+        n.wins += 1;
+      } else {
+        n.wins -= 1;
+      }
+
+      // Diskontierter Value (spezifisch für OMCTS)
       int depthDiff = d_sprime - n.depth;
       double discountedDelta = delta * Math.pow(settings.discountFactor(), depthDiff);
       n.value += discountedDelta;
 
-      if(settings.useRave()){
-        for(Move m: movesInRollout){
-          n.raveVisits.put(m,n.raveVisits.getOrDefault(m,0) +1);
-          n.raveValues.put(m,n.raveValues.getOrDefault(m,0.0)+discountedDelta);
+      // RAVE-Update auch mit ±1 Reward
+      if (settings.useRave()) {
+        for (Move m : movesInRollout) {
+          n.raveVisits.put(m, n.raveVisits.getOrDefault(m, 0) + 1);
+
+          if (winner == this.color) {
+            n.raveValues.put(m, n.raveValues.getOrDefault(m, 0.0) + 1.0);
+          } else {
+            n.raveValues.put(m, n.raveValues.getOrDefault(m, 0.0) - 1.0);
+          }
         }
       }
     }
@@ -337,20 +321,6 @@ public class OMCTSPlayer extends Player {
   private PLAYER_COLOR toggleColor(PLAYER_COLOR color) {
     return (color == WHITE) ? BLACK : WHITE;
   }
-
-  /*private void backUp(Node start, int delta) {
-    int d_sprime = start.depth;  // Tiefe des Rollout-Endknotens
-
-    for(Node n = start; n != null; n = n.parent) {
-      n.visits++;
-
-      // Diskontierung abhängig von Tiefe
-      int depthDiff = d_sprime - n.depth;
-      double discountedDelta = delta * Math.pow(settings.discountFactor(), depthDiff);
-
-      n.value += discountedDelta;
-    }
-  }*/
 
   @Override
   public String toString() {
@@ -418,10 +388,13 @@ public class OMCTSPlayer extends Player {
   private static class RolloutResult {
     int value;
     List<Move> movesInRollout;
+    PLAYER_COLOR winner;
 
-    RolloutResult(int value, List<Move> movesInRollout) {
+
+    RolloutResult(int value, List<Move> movesInRollout, PLAYER_COLOR winner) {
       this.value = value;
       this.movesInRollout = movesInRollout;
+      this.winner = winner;
     }
   }
 }

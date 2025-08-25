@@ -11,7 +11,11 @@ import com.mcgreedy.optionothello.ai.OMCTSSettings;
 import com.mcgreedy.optionothello.ai.OMCTSPlayer;
 import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.ai.RandomPlayer;
+import com.mcgreedy.optionothello.ai.options.CornerGrabberOption;
 import com.mcgreedy.optionothello.ai.options.CornerOption;
+import com.mcgreedy.optionothello.ai.options.EdgeStabilizerOption;
+import com.mcgreedy.optionothello.ai.options.MobilityReducerOption;
+import com.mcgreedy.optionothello.ai.options.ParityControllerOption;
 import com.mcgreedy.optionothello.ai.options.RandomOption;
 import com.mcgreedy.optionothello.ai.options.StartOption;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
@@ -126,7 +130,11 @@ public class GameUI {
   List<Option> options = List.of(
       new StartOption(),
       new CornerOption(),
-      new RandomOption()
+      new RandomOption(),
+      new CornerGrabberOption(),
+      new EdgeStabilizerOption(),
+      new MobilityReducerOption(),
+      new ParityControllerOption()
   );
 
   // Game Parameter
