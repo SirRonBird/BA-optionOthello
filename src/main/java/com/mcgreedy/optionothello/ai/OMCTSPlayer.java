@@ -36,6 +36,10 @@ public class OMCTSPlayer extends Player {
   Random rand = new Random();
   int nodeCounter=0;
 
+  //MAST
+  private Map<Move, Integer> mastVisits = new HashMap<>();
+  private Map<Move, Double> mastValues = new HashMap<>();
+
   public OMCTSPlayer(PLAYER_COLOR color,
       PLAYER_TYPE type,
       Gamemanager gamemanager,
@@ -63,23 +67,17 @@ public class OMCTSPlayer extends Player {
     while (System.currentTimeMillis() - startTime < duration) {
       currentNode = root;
       while (!stop(currentNode.board)) {
-        //LOGGER.info("Current Node: {}", currentNode.depth);
         expandedOptions.clear();
         currentNode.availableOptions.clear();
         //If option stops in state currentNode
         if (currentNode.hasFinishedOption()) {
           //availableOptions is set to all options with currentNode in I
-          //LOGGER.info("No active Option");
           options.forEach(option -> {
-            /*LOGGER.info("Check board {} if it fits into the Options initSet", currentNode.board);*/
             if (option.isBoardInInitiationSet(currentNode.board, color)) {
-              /*LOGGER.info("Current Board fits into the Options initSet");*/
               currentNode.availableOptions.add(option);
-             /* LOGGER.info("availableOptions: {}", currentNode.availableOptions);*/
             }
           });
         } else {
-          //LOGGER.info("Current Node {} has not finished Options!", currentNode.depth);
           //else no new option can be selected (availableOptions only contains the current option
           currentNode.availableOptions.clear();
           currentNode.availableOptions.add(currentNode.optionFollowed);
@@ -90,8 +88,6 @@ public class OMCTSPlayer extends Player {
             expandedOptions.add(child.optionFollowed);
           }
         });
-
-        //LOGGER.debug("Expanded Options: {}; Available Option: {}; Options {};", expandedOptions.size(), currentNode.availableOptions.size(), options.size());
 
         //if options == availableOptions(m)
         if (new HashSet<>(expandedOptions).containsAll(currentNode.availableOptions)) {
@@ -107,29 +103,22 @@ public class OMCTSPlayer extends Player {
           Option w = randomElement(notYetExploredOptions);
           // get the action from getAction(w, board) -> a
           Move a = getAction(w, currentNode);
-          //LOGGER.info("Move {} was selected", a);
           // create child from currentNode with action a and add it to the childrenList -> s'
           Node childNode = expand(currentNode, a);
           // set the chosen option from child s' to w
           childNode.optionFollowed = w;
-
-          //LOGGER.info("New child: {}, Board: {}",childNode.depth,childNode.board);
           currentNode.children.add(childNode);
-          //LOGGER.info("Option followed in new Node: {}", newNode.optionFollowed);
           newNode=childNode;
           break;
         }
       }
-      //rollout -> delta
-      nodeCounter++;
-      //int delta = rollOut(newNode);
-      //backup delta to parent nodes
-      //backUp(newNode, delta);
 
+      nodeCounter++;
+      //rollout -> delta
       RolloutResult result = rollOut(newNode);
       backUp(newNode,result.value,result.movesInRollout, result.winner);
     }
-    //LOGGER.info("Max depth: {}", findMaxDepth(root));
+
     Move bestMove =  getBestAction(root);
     if(bestMove.getStatistics() == null){
       bestMove.setStatistics(new MoveStatistics());
@@ -218,7 +207,7 @@ public class OMCTSPlayer extends Player {
       double amaf = (raveN > 0) ? raveW / raveN : 0.0;
 
       // Beta-Mischung zwischen qValue und AMA-Faktor
-      double k = 1000.0; // wie beim MCTS
+      double k = 10.0; // wie beim MCTS
       double beta = Math.sqrt(k / (3.0 * child.visits + k));
 
       double mixedValue = (1 - beta) * qValue + beta * amaf;
@@ -265,12 +254,17 @@ public class OMCTSPlayer extends Player {
 
     while(!currentSimNode.board.isGameOver()){
       List<Move> moves = currentSimNode.board.generateMovesAsList(simColor == WHITE, simulationDepth, PLAYER_TYPE.O_MCTS);
-
       Move chosenMove;
+
       if (moves.isEmpty()) {
         chosenMove = new Move(simColor, -1, simulationDepth, PLAYER_TYPE.O_MCTS);
       } else if (currentSimNode.hasFinishedOption()) {
-        chosenMove = moves.get(rand.nextInt(moves.size()));
+        if(settings.useMast()){
+          //select Move with MAST
+          chosenMove = selectMoveWithMAST(moves, simColor);
+        } else {
+          chosenMove = moves.get(rand.nextInt(moves.size()));
+        }
       } else {
         chosenMove = getAction(currentSimNode.optionFollowed, currentSimNode);
       }
@@ -281,8 +275,37 @@ public class OMCTSPlayer extends Player {
       simulationDepth++;
     }
     PLAYER_COLOR winner = currentSimNode.board.getWinner();
+
+    //MAST-Update
+    for(Move m : movesInRollout){
+      mastVisits.put(m,mastVisits.getOrDefault(m,0) +1);
+      double reward = winner == this.color ? 1.0 : -1.0;
+      mastValues.put(m,mastValues.getOrDefault(m,0.0) + reward);
+    }
+
     return new RolloutResult(currentSimNode.board.getValue(start.color == WHITE),
         movesInRollout, winner);
+  }
+
+  private Move selectMoveWithMAST(List<Move> moves, PLAYER_COLOR color) {
+    double tau = 10; // Temperatur
+    double sum = 0.0;
+    double[] scores = new double[moves.size()];
+
+    for (int i = 0; i < moves.size(); i++) {
+      Move m = moves.get(i);
+      double q = mastValues.getOrDefault(m, 0.0) / (mastVisits.getOrDefault(m, 1));
+      scores[i] = Math.exp(q / tau);
+      sum += scores[i];
+    }
+
+    double r = Math.random() * sum;
+    for (int i = 0; i < moves.size(); i++) {
+      r -= scores[i];
+      if (r <= 0) return moves.get(i);
+    }
+
+    return moves.get(moves.size() - 1);
   }
 
   private void backUp(Node start, int delta, List<Move> movesInRollout, PLAYER_COLOR winner) {
