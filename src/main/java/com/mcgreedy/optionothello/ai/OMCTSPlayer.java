@@ -212,7 +212,7 @@ public class OMCTSPlayer extends Player {
       int raveN = child.parent.raveVisits.getOrDefault(move,0);
       double raveW = child.parent.raveValues.getOrDefault(move,0.0);
       double amaf = (raveN > 0) ? raveW / raveN: 0.0;
-      double beta = Math.sqrt(1000.0 / (3.0 * child.visits + 1000.0));
+      double beta = Math.sqrt(10 / (3.0 * child.visits + 10));
 
       double raveValue = (1 - beta) * (winrate + exploration) + beta * amaf;
       LOGGER.info("RAVE Value: {}", raveValue);

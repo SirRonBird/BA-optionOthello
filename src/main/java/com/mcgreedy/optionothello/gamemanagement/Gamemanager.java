@@ -128,7 +128,6 @@ public class Gamemanager {
     } else {
       executor.schedule(() -> Platform.runLater(() -> {
         Move aiMove = currentPlayer.getMove(currentGame.board);
-        //TODO: Validate Move and give back boards to debug what went wrong there.
         if (aiMove.getPosition() == -1) {
           passMove(aiMove);
         } else {

@@ -15,140 +15,135 @@ import java.util.*;
 public class MCTSPlayer extends Player {
 
     private final MCTSSettings settings;
-
-    private final Random random = new Random();
-
+    private final Random rand = new Random();
     private static final Logger LOGGER = LogManager.getLogger(MCTSPlayer.class);
-
     private int nodeCount = 0;
 
-    public MCTSPlayer(PLAYER_COLOR color, PLAYER_TYPE type, Gamemanager gamemanager, MCTSSettings mctsSettings) {
+    public MCTSPlayer(PLAYER_COLOR color, PLAYER_TYPE type, Gamemanager gamemanager, MCTSSettings settings) {
         super(color, type, gamemanager);
-        this.settings = mctsSettings;
-        LOGGER.info("Created MCTSPlayer with settings: {}" , settings);
+        this.settings = settings;
+        LOGGER.info("Created MCTSPlayer with settings: {}", settings);
     }
 
     @Override
     public Move getMove(Board board) {
         Node root = new Node(null, null, board, color, 0);
-        nodeCount =0;
-
+        nodeCount = 0;
         long duration = 1000 + 1000 * searchTimeLimit;
         long startTime = System.currentTimeMillis();
 
-        //for (int i = 0; i < SIMULATION_LIMIT; i++) {
         while (System.currentTimeMillis() - startTime < duration) {
             Node node = root;
             Board boardClone = board.clone();
-            List<Move> simulationPath = new ArrayList<>();
+            List<Move> rolloutMoves = new ArrayList<>();
 
             // Selection
-            while (node.untriedMoves.isEmpty() && node.hasChildren()) {
+            while (!node.untriedMovesAvailable() && node.hasChildren()) {
                 node = node.selectChild();
                 boardClone.updateBoard(node.move.getPosition(), node.move.getColor() == PLAYER_COLOR.WHITE);
-                simulationPath.add(node.move);
+                rolloutMoves.add(node.move);
             }
 
             // Expansion
-            if (!node.untriedMoves.isEmpty()) {
+            if (node.untriedMovesAvailable()) {
                 Move move = node.untriedMoves.removeFirst();
                 boardClone.updateBoard(move.getPosition(), move.getColor() == PLAYER_COLOR.WHITE);
                 Move moveWithDepth = new Move(move.getColor(), move.getPosition(), node.depth + 1, move.getPlayerType());
                 Node child = new Node(node, moveWithDepth, boardClone.clone(), toggleColor(node.player), node.depth + 1);
-                nodeCount++;
                 node.children.add(child);
+                nodeCount++;
                 node = child;
-                simulationPath.add(moveWithDepth);
+                rolloutMoves.add(moveWithDepth);
             }
 
             // Simulation
             PLAYER_COLOR simColor = node.player;
-            int simulationDepth = node.depth + 1;
+            int simDepth = node.depth + 1;
             while (!boardClone.isGameOver()) {
-                List<Move> moves = boardClone.generateMovesAsList(simColor == PLAYER_COLOR.WHITE, simulationDepth, PLAYER_TYPE.MCTS);
+                List<Move> moves = boardClone.generateMovesAsList(simColor == PLAYER_COLOR.WHITE, simDepth, PLAYER_TYPE.MCTS);
                 if (moves.isEmpty()) {
                     simColor = toggleColor(simColor);
                     continue;
                 }
-
-                Move move = moves.get(random.nextInt(moves.size()));
-
-
+                Move move = moves.get(rand.nextInt(moves.size()));
                 boardClone.updateBoard(move.getPosition(), move.getColor() == PLAYER_COLOR.WHITE);
-                simulationPath.add(move);
+                rolloutMoves.add(move);
                 simColor = toggleColor(simColor);
-                simulationDepth++;
+                simDepth++;
             }
 
             // Backpropagation
             PLAYER_COLOR winner = boardClone.getWinner();
+
             for (Node n = node; n != null; n = n.parent) {
                 n.visits++;
-                if (winner == this.color) n.wins++;
-                n.maxSimulationDepth = Math.max(n.maxSimulationDepth, simulationDepth);
+
+                // ±1 Reward
+                if (winner == this.color) {
+                    n.wins += 1;
+                } else {
+                    n.wins -= 1;
+                }
+
+                n.maxSimulationDepth = Math.max(n.maxSimulationDepth, simDepth);
+
+                if (settings.useRave()) {
+                    for (Move m : rolloutMoves) {
+                        n.raveVisits.put(m, n.raveVisits.getOrDefault(m, 0) + 1);
+
+                        if (winner == this.color) {
+                            n.raveValues.put(m, n.raveValues.getOrDefault(m, 0.0) + 1.0);
+                        } else {
+                            n.raveValues.put(m, n.raveValues.getOrDefault(m, 0.0) - 1.0);
+                        }
+                    }
+                }
             }
+
         }
 
         Node best = root.bestChild();
-        //LOGGER.info("Maxdepth: {}", findMaxDepth(best));
         if (best == null || best.move == null) {
             Move passMove = new Move(this.color, -1, 0, this.type);
             passMove.setStatistics(new MoveStatistics());
             return passMove;
         }
+
         Move move = best.move;
         long searchTime = System.currentTimeMillis() - startTime;
-
-        MoveStatistics statistics = new MoveStatistics(
-            findMaxDepth(root),
-            null,
-            countNodes(root),
-            searchTime
-        );
-        move.setStatistics(statistics);
+        MoveStatistics stats = new MoveStatistics(findMaxDepth(root), null, countNodes(root), searchTime);
+        move.setStatistics(stats);
         return move;
-    }
-
-    public static int countNodes(Node root) {
-        if (root == null) return 0;
-
-        int count = 0;
-        Queue<Node> queue = new LinkedList<>();
-        queue.add(root);
-
-        while (!queue.isEmpty()){
-            Node current = queue.poll();
-            count++;
-            queue.addAll(current.children);
-        }
-
-        return count;
-    }
-
-    public static int findMaxDepth(Node root) {
-        if (root == null) return Integer.MIN_VALUE;
-
-        int max = root.depth;
-
-        for (Node child : root.children) {
-            int childMax = findMaxDepth(child);
-            if (childMax > max) {
-                max = childMax;
-            }
-        }
-
-        return max;
     }
 
     private PLAYER_COLOR toggleColor(PLAYER_COLOR color) {
         return (color == PLAYER_COLOR.WHITE) ? PLAYER_COLOR.BLACK : PLAYER_COLOR.WHITE;
     }
 
+    public static int countNodes(Node root) {
+        if (root == null) return 0;
+        int count = 0;
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Node current = queue.poll();
+            count++;
+            queue.addAll(current.children);
+        }
+        return count;
+    }
+
+    public static int findMaxDepth(Node root) {
+        if (root == null) return Integer.MIN_VALUE;
+        int max = root.depth;
+        for (Node child : root.children) max = Math.max(max, findMaxDepth(child));
+        return max;
+    }
+
     private class Node {
         Node parent;
         List<Node> children = new ArrayList<>();
-        List<Move> untriedMoves;
-
+        LinkedList<Move> untriedMoves;
         Move move;
         Board board;
         PLAYER_COLOR player;
@@ -157,7 +152,9 @@ public class MCTSPlayer extends Player {
         int depth;
         int maxSimulationDepth = 0;
 
-        private final Random random = new Random();
+        // RAVE
+        Map<Move, Integer> raveVisits = new HashMap<>();
+        Map<Move, Double> raveValues = new HashMap<>();
 
         Node(Node parent, Move move, Board board, PLAYER_COLOR player, int depth) {
             this.parent = parent;
@@ -167,43 +164,51 @@ public class MCTSPlayer extends Player {
             this.depth = depth;
 
             if (!board.isGameOver()) {
-                long startMoveCreation = System.currentTimeMillis();
-                this.untriedMoves = board.generateMovesAsList(player == PLAYER_COLOR.WHITE, depth, PLAYER_TYPE.MCTS);
-                if (this.untriedMoves.isEmpty()) {
-                    Move passMove = new Move(player, -1, depth, PLAYER_TYPE.MCTS);
-                    this.untriedMoves.add(passMove);
-                }
-                long endMoveCreation = System.currentTimeMillis();
-                long moveCreation = endMoveCreation - startMoveCreation;
-                //LOGGER.info("It took {} ms to create all possible Moves for MCTS", moveCreation);
-            } else {
-                this.untriedMoves = new ArrayList<>();
-            }
+                this.untriedMoves = new LinkedList<>(board.generateMovesAsList(player == PLAYER_COLOR.WHITE, depth, PLAYER_TYPE.MCTS));
+                if (this.untriedMoves.isEmpty()) this.untriedMoves.add(new Move(player, -1, depth, PLAYER_TYPE.MCTS));
+            } else this.untriedMoves = new LinkedList<>();
+        }
+
+        boolean untriedMovesAvailable() {
+            return !untriedMoves.isEmpty();
         }
 
         boolean hasChildren() {
-            return !this.children.isEmpty();
+            return !children.isEmpty();
         }
 
         Node selectChild() {
-            return children.stream().max(Comparator.<Node>comparingDouble(
-                    child -> {
-                        double winRate =  child.wins / (child.visits + 1e-6);
-                        return winRate + settings.explorationConstant() * Math.sqrt((2*Math.log(visits)) / child.visits);
-                    }).thenComparingDouble(n -> random.nextDouble())
-            ).orElseThrow();
+            return children.stream().max(Comparator.comparingDouble(this::uctRaveValue)).orElseThrow();
         }
 
         Node bestChild() {
             return children.stream().max(Comparator.comparingInt(c -> c.visits)).orElse(null);
         }
-        @Override
-        public String toString(){
-            return "[ Node (" + maxSimulationDepth + "):" + children +"]";
+
+        private double uctRaveValue(Node child) {
+            double qValue = child.wins / (child.visits + 1e-6);
+
+            double exploration = settings.explorationConstant() *
+                Math.sqrt(2 * Math.log(this.visits + 1) / (child.visits + 1e-6));
+
+            if (settings.useRave() && child.move != null) {
+                int raveN = this.raveVisits.getOrDefault(child.move, 0);
+                double raveW = this.raveValues.getOrDefault(child.move, 0.0);
+                double amaf = (raveN > 0) ? raveW / raveN : 0.0;
+
+                double k = 1000;
+                double beta = Math.sqrt(k / (3.0 * this.visits + k));
+
+                double mixedValue = (1 - beta) * qValue + beta * amaf;
+
+                return mixedValue + exploration;
+            }
+
+            return qValue + exploration;
         }
+
     }
-
-
-
 }
+
+
 
