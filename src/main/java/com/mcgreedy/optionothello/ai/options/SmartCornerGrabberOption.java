@@ -9,11 +9,22 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public class CornerGrabberOption implements Option {
+public class SmartCornerGrabberOption implements Option {
 
   private static final long CORNERS = 0x8100000000000081L;
   private static final long X_SQUARES = 0x4200000000000042L;
   private static final long C_SQUARES = 0x2400000000000024L;
+
+  private static final int[] POSITION_WEIGHTS = {
+      100, -20, 10, 5, 5, 10, -20, 100,
+      -20, -50, -2, -2, -2, -2, -50, -20,
+      10, -2, -1, -1, -1, -1, -2, 10,
+      5, -2, -1, -1, -1, -1, -2, 5,
+      5, -2, -1, -1, -1, -1, -2, 5,
+      10, -2, -1, -1, -1, -1, -2, 10,
+      -20, -50, -2, -2, -2, -2, -50, -20,
+      100, -20, 10, 5, 5, 10, -20, 100
+  };
 
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
@@ -32,41 +43,18 @@ public class CornerGrabberOption implements Option {
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    Move bestMove = null;
-    int bestValue = Integer.MIN_VALUE;
+    return possibleMoves.stream()
+        .max(Comparator.comparingInt(m -> evaluateMove(m)))
+        .orElse(possibleMoves.get(new Random().nextInt(possibleMoves.size())));
+  }
 
-    for (Move move : possibleMoves) {
-      long moveBit = 1L << move.getPosition();
-      if ((moveBit & CORNERS) != 0 && (moveBit & (X_SQUARES | C_SQUARES)) == 0) {
-        int value = evaluateMove(board, move, move.getColor());
-        if (value > bestValue) {
-          bestValue = value;
-          bestMove = move;
-        }
-      }
-    }
-
-    if (bestMove == null) {
-      bestMove = possibleMoves.stream()
-          .max(Comparator.comparingInt(m -> evaluateMove(board, m, m.getColor())))
-          .orElse(possibleMoves.get(new Random().nextInt(possibleMoves.size())));
-    }
-
-    return bestMove;
+  private int evaluateMove(Move move) {
+    return POSITION_WEIGHTS[move.getPosition()];
   }
 
   @Override
   public String getName() { return "SmartCornerGrabber"; }
 
   @Override
-  public String toString() {return "SmartCornerGrabber"; }
-
-  private int evaluateMove(Board board, Move move, PLAYER_COLOR color) {
-    long moveBit = 1L << move.getPosition();
-    if ((moveBit & CORNERS) != 0) return 5;
-    return 0;
-  }
+  public String toString() { return "SmartCornerGrabber"; }
 }
-
-
-

@@ -3,21 +3,20 @@ package com.mcgreedy.optionothello.ai.options;
 import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.engine.OthelloEvaluator;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 
-public class EdgeStabilizerOption implements Option {
+public class EdgeSecuringOption implements Option {
 
   private static final long CORNERS = 0x8100000000000081L;
-  private static final long EDGES = 0x42C3C3C3C3C34242L & ~CORNERS;
+  private static final long EDGES = 0x7E8181818181817EL & ~CORNERS; // alle Ränder ohne Ecken
 
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
     long empty = ~(board.getWhite() | board.getBlack());
-    return (EDGES & empty) != 0;
+    return (EDGES & empty) != 0; // freie Randfelder vorhanden
   }
 
   @Override
@@ -26,18 +25,23 @@ public class EdgeStabilizerOption implements Option {
   @Override
   public boolean shouldTerminate(Board board, PLAYER_COLOR playerColor) {
     long empty = ~(board.getWhite() | board.getBlack());
-    return (EDGES & empty) == 0;
+    return (EDGES & empty) == 0; // keine Randfelder mehr
   }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
+    PLAYER_COLOR color = possibleMoves.get(0).getColor();
     Move bestMove = null;
     int bestValue = Integer.MIN_VALUE;
 
     for (Move move : possibleMoves) {
       long moveBit = 1L << move.getPosition();
+
+      // Priorisiere Randzüge
       if ((moveBit & EDGES) != 0) {
-        int value = evaluateMove(board, move, move.getColor());
+        Board clone = board.clone();
+        clone.updateBoard(move.getPosition(), color == PLAYER_COLOR.WHITE);
+        int value = OthelloEvaluator.evaluate(clone, color);
         if (value > bestValue) {
           bestValue = value;
           bestMove = move;
@@ -45,25 +49,26 @@ public class EdgeStabilizerOption implements Option {
       }
     }
 
+    // Fallback: bester Zug laut Evaluator
     if (bestMove == null) {
-      bestMove = possibleMoves.stream()
-          .max(Comparator.comparingInt(m -> evaluateMove(board, m, m.getColor())))
-          .orElse(possibleMoves.get(new Random().nextInt(possibleMoves.size())));
+      for (Move move : possibleMoves) {
+        Board clone = board.clone();
+        clone.updateBoard(move.getPosition(), color == PLAYER_COLOR.WHITE);
+        int value = OthelloEvaluator.evaluate(clone, color);
+        if (value > bestValue) {
+          bestValue = value;
+          bestMove = move;
+        }
+      }
     }
 
     return bestMove;
   }
 
   @Override
-  public String getName() { return "StableEdgeController"; }
+  public String getName() { return "EdgeSecuringOption"; }
 
   @Override
-  public String toString() { return "StableEdgeController"; }
-
-  private int evaluateMove(Board board, Move move, PLAYER_COLOR color) {
-    long moveBit = 1L << move.getPosition();
-    return (moveBit & EDGES) != 0 ? 3 : 0;
-  }
+  public String toString() { return "EdgeSecuringOption"; }
 }
-
 

@@ -9,10 +9,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-public class EdgeStabilizerOption implements Option {
+public class StableEdgeOption implements Option {
 
   private static final long CORNERS = 0x8100000000000081L;
-  private static final long EDGES = 0x42C3C3C3C3C34242L & ~CORNERS;
+  private static final long BAD_EDGES = 0x2400000000000024L; // C-Squares
+  private static final long EDGES = 0xFF818181818181FFL & ~CORNERS; // alle Ränder außer Ecken
 
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
@@ -31,27 +32,16 @@ public class EdgeStabilizerOption implements Option {
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    Move bestMove = null;
-    int bestValue = Integer.MIN_VALUE;
+    return possibleMoves.stream()
+        .max(Comparator.comparingInt(this::evaluateMove))
+        .orElse(possibleMoves.get(new Random().nextInt(possibleMoves.size())));
+  }
 
-    for (Move move : possibleMoves) {
-      long moveBit = 1L << move.getPosition();
-      if ((moveBit & EDGES) != 0) {
-        int value = evaluateMove(board, move, move.getColor());
-        if (value > bestValue) {
-          bestValue = value;
-          bestMove = move;
-        }
-      }
-    }
-
-    if (bestMove == null) {
-      bestMove = possibleMoves.stream()
-          .max(Comparator.comparingInt(m -> evaluateMove(board, m, m.getColor())))
-          .orElse(possibleMoves.get(new Random().nextInt(possibleMoves.size())));
-    }
-
-    return bestMove;
+  private int evaluateMove(Move move) {
+    long moveBit = 1L << move.getPosition();
+    if ((moveBit & BAD_EDGES) != 0) return -10;
+    if ((moveBit & EDGES) != 0) return 5;
+    return 0;
   }
 
   @Override
@@ -59,11 +49,4 @@ public class EdgeStabilizerOption implements Option {
 
   @Override
   public String toString() { return "StableEdgeController"; }
-
-  private int evaluateMove(Board board, Move move, PLAYER_COLOR color) {
-    long moveBit = 1L << move.getPosition();
-    return (moveBit & EDGES) != 0 ? 3 : 0;
-  }
 }
-
-

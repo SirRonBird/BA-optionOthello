@@ -64,7 +64,10 @@ public class OMCTSPlayer extends Player {
     long duration = 1000 + 1000 * searchTimeLimit;
     long startTime = System.currentTimeMillis();
 
-    while (System.currentTimeMillis() - startTime < duration) {
+    int simulations = 0;
+
+    //while (System.currentTimeMillis() - startTime < duration) {
+    while (simulations <= 500){
       currentNode = root;
       while (!stop(currentNode.board)) {
         expandedOptions.clear();
@@ -117,6 +120,8 @@ public class OMCTSPlayer extends Player {
       //rollout -> delta
       RolloutResult result = rollOut(newNode);
       backUp(newNode,result.value,result.movesInRollout, result.winner);
+
+      simulations++;
     }
 
     Move bestMove =  getBestAction(root);
@@ -189,7 +194,7 @@ public class OMCTSPlayer extends Player {
 
     //return children.stream().max(Comparator.comparingDouble(OMCTSPlayer::uctValue)).orElse(children.get(rand.nextInt(children.size())));
     return children.stream().max((c1,c2) -> Double.compare(uct(c1), uct(c2)))
-        .orElse(children.get(rand.nextInt(children.size())));
+        .orElse(children.get(rand.  nextInt(children.size())));
   }
 
   private double uct(Node child){
@@ -207,7 +212,7 @@ public class OMCTSPlayer extends Player {
       double amaf = (raveN > 0) ? raveW / raveN : 0.0;
 
       // Beta-Mischung zwischen qValue und AMA-Faktor
-      double k = 10.0; // wie beim MCTS
+      double k = 1000.0; // wie beim MCTS
       double beta = Math.sqrt(k / (3.0 * child.visits + k));
 
       double mixedValue = (1 - beta) * qValue + beta * amaf;

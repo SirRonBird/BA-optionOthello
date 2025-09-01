@@ -13,10 +13,19 @@ import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.ai.RandomPlayer;
 import com.mcgreedy.optionothello.ai.options.CornerGrabberOption;
 import com.mcgreedy.optionothello.ai.options.CornerOption;
+import com.mcgreedy.optionothello.ai.options.CornerSecuringOption;
+import com.mcgreedy.optionothello.ai.options.EdgeSecuringOption;
 import com.mcgreedy.optionothello.ai.options.EdgeStabilizerOption;
+import com.mcgreedy.optionothello.ai.options.EndgameSolverOption;
+import com.mcgreedy.optionothello.ai.options.FrontierReducerOption;
+import com.mcgreedy.optionothello.ai.options.MobilityHeuristicMinimaxOption;
 import com.mcgreedy.optionothello.ai.options.MobilityReducerOption;
+import com.mcgreedy.optionothello.ai.options.MobilityTrapOption;
 import com.mcgreedy.optionothello.ai.options.ParityControllerOption;
+import com.mcgreedy.optionothello.ai.options.ParityEndgameOption;
 import com.mcgreedy.optionothello.ai.options.RandomOption;
+import com.mcgreedy.optionothello.ai.options.SmartCornerGrabberOption;
+import com.mcgreedy.optionothello.ai.options.StableEdgeOption;
 import com.mcgreedy.optionothello.ai.options.StartOption;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
@@ -134,7 +143,16 @@ public class GameUI {
       new CornerGrabberOption(),
       new EdgeStabilizerOption(),
       new MobilityReducerOption(),
-      new ParityControllerOption()
+      new ParityControllerOption(),
+      new SmartCornerGrabberOption(),
+      new StableEdgeOption(),
+      new ParityEndgameOption(),
+      new FrontierReducerOption(),
+      new EndgameSolverOption(),
+      new MobilityHeuristicMinimaxOption(),
+      new EdgeSecuringOption(),
+      new MobilityTrapOption(),
+      new CornerSecuringOption()
   );
 
   // Game Parameter
