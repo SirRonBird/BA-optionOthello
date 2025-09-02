@@ -4,6 +4,8 @@ import static com.mcgreedy.optionothello.utils.Constants.BOARD_SIZE;
 import static com.mcgreedy.optionothello.utils.Constants.CELL_GAP;
 import static com.mcgreedy.optionothello.utils.Constants.CELL_SIZE;
 
+import com.mcgreedy.optionothello.ai.Option;
+import com.mcgreedy.optionothello.dtos.OptionDTO;
 import com.mcgreedy.optionothello.dtos.SaveGameDTO;
 import com.mcgreedy.optionothello.dtos.SaveGameDTO.MoveDetails;
 import com.mcgreedy.optionothello.utils.GUIUtils;
@@ -191,6 +193,16 @@ public class GameAnalysisUI {
       Label moveLabel = new Label("Move " + moveNumber);
       moveLabel.setStyle(LABEL_STYLE);
       moveDetailsContainer.getChildren().add(moveLabel);
+
+      int movePosition = moveDetails.getPosition();
+      Label movePositionLabel = new Label(movePosition + "");
+      movePositionLabel.setStyle("-fx-font-size: 16px;");
+      moveDetailsContainer.getChildren().add(movePositionLabel);
+
+      OptionDTO moveOption = moveDetails.getMoveStatistics().getOption();
+      Label moveOptionLabel = new Label(moveOption.getName());
+      moveOptionLabel.setStyle("-fx-font-size: 16px;");
+      moveDetailsContainer.getChildren().add(moveOptionLabel);
     }
   }
 

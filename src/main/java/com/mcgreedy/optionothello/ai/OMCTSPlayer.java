@@ -66,8 +66,10 @@ public class OMCTSPlayer extends Player {
 
     int simulations = 0;
 
-    //while (System.currentTimeMillis() - startTime < duration) {
-    while (simulations <= 500){
+    while (
+        (searchTimeLimit >= 0 && System.currentTimeMillis() - startTime < duration) ||
+            (simulationLimit > 0 && simulations <= simulationLimit)
+    ) {
       currentNode = root;
       while (!stop(currentNode.board)) {
         expandedOptions.clear();

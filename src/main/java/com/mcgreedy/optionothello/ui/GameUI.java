@@ -11,22 +11,17 @@ import com.mcgreedy.optionothello.ai.OMCTSSettings;
 import com.mcgreedy.optionothello.ai.OMCTSPlayer;
 import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.ai.RandomPlayer;
-import com.mcgreedy.optionothello.ai.options.CornerGrabberOption;
+import com.mcgreedy.optionothello.ai.options.CenterControlOption;
 import com.mcgreedy.optionothello.ai.options.CornerOption;
-import com.mcgreedy.optionothello.ai.options.CornerSecuringOption;
-import com.mcgreedy.optionothello.ai.options.EdgeSecuringOption;
-import com.mcgreedy.optionothello.ai.options.EdgeStabilizerOption;
-import com.mcgreedy.optionothello.ai.options.EndgameSolverOption;
-import com.mcgreedy.optionothello.ai.options.FrontierReducerOption;
-import com.mcgreedy.optionothello.ai.options.MobilityHeuristicMinimaxOption;
-import com.mcgreedy.optionothello.ai.options.MobilityReducerOption;
-import com.mcgreedy.optionothello.ai.options.MobilityTrapOption;
-import com.mcgreedy.optionothello.ai.options.ParityControllerOption;
-import com.mcgreedy.optionothello.ai.options.ParityEndgameOption;
-import com.mcgreedy.optionothello.ai.options.RandomOption;
-import com.mcgreedy.optionothello.ai.options.SmartCornerGrabberOption;
-import com.mcgreedy.optionothello.ai.options.StableEdgeOption;
-import com.mcgreedy.optionothello.ai.options.StartOption;
+import com.mcgreedy.optionothello.ai.options.DiagonalControlOption;
+import com.mcgreedy.optionothello.ai.options.FrontierControlOption;
+import com.mcgreedy.optionothello.ai.options.HeatmapOption;
+import com.mcgreedy.optionothello.ai.options.MaxFlipsOption;
+import com.mcgreedy.optionothello.ai.options.MobilityOption;
+import com.mcgreedy.optionothello.ai.options.ParityOption;
+import com.mcgreedy.optionothello.ai.options.PotentialMobilityOption;
+import com.mcgreedy.optionothello.ai.options.PreventOpponentCornerOption;
+import com.mcgreedy.optionothello.ai.options.StableDiscsOption;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
 import com.mcgreedy.optionothello.gamemanagement.Player;
@@ -53,12 +48,16 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.BorderStroke;
@@ -137,22 +136,17 @@ public class GameUI {
   boolean isBlackOmctsMastEnabled = false;
   boolean isWhiteOmctsMastEnabled = false;
   List<Option> options = List.of(
-      new StartOption(),
       new CornerOption(),
-      new RandomOption(),
-      new CornerGrabberOption(),
-      new EdgeStabilizerOption(),
-      new MobilityReducerOption(),
-      new ParityControllerOption(),
-      new SmartCornerGrabberOption(),
-      new StableEdgeOption(),
-      new ParityEndgameOption(),
-      new FrontierReducerOption(),
-      new EndgameSolverOption(),
-      new MobilityHeuristicMinimaxOption(),
-      new EdgeSecuringOption(),
-      new MobilityTrapOption(),
-      new CornerSecuringOption()
+      new PreventOpponentCornerOption(),
+      new CenterControlOption(),
+      new DiagonalControlOption(),
+      new FrontierControlOption(),
+      new HeatmapOption(),
+      new MaxFlipsOption(),
+      new MobilityOption(),
+      new ParityOption(),
+      new PotentialMobilityOption(),
+      new StableDiscsOption()
   );
 
   // Game Parameter
@@ -564,7 +558,6 @@ public class GameUI {
     return whiteOptionsList;
   }
 
-
   private void playerSkipMove(PLAYER_COLOR playerColor) {
     HumanPlayer player = (HumanPlayer) gameManager.getCurrentPlayer();
     if (player.getColor() == playerColor) {
@@ -685,12 +678,14 @@ public class GameUI {
     return panel;
   }
 
+
   private void showNewGameDialog() {
 
     Dialog<ButtonType> dialog = new Dialog<>();
     dialog.setTitle("Start new game");
     dialog.setHeaderText("Would you like to start a new game with this players/settings?");
 
+    // Buttons
     ButtonType startButtonType = new ButtonType("Start", ButtonBar.ButtonData.OK_DONE);
     ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
     dialog.getDialogPane().getButtonTypes().addAll(startButtonType, cancelButtonType);
@@ -698,53 +693,97 @@ public class GameUI {
     Player blackPlayer = getBlackPlayer();
     Player whitePlayer = getWhitePlayer();
 
-    // Placeholder
-    VBox content = new VBox(10);
-    content.setPadding(new Insets(10));
+    VBox contentBox = new VBox(10);
+    contentBox.setPadding(new Insets(10));
     assert blackPlayer != null;
     assert whitePlayer != null;
-    content.getChildren().addAll(
-        new Label(blackPlayer.toString()),
-        new Label(whitePlayer.toString())
+
+    contentBox.getChildren().addAll(
+        new Label("Black: " + blackPlayer.toString()),
+        new Label("White: " + whitePlayer.toString())
     );
 
-    content.getChildren().add(new Separator(Orientation.HORIZONTAL));
+    contentBox.getChildren().add(new Separator(Orientation.HORIZONTAL));
 
+    // --- Limitation Settings ---
+    VBox limitationSettingsBox = new VBox(10);
+    ToggleGroup limitationTypeGroup = new ToggleGroup();
+    RadioButton simulationLimitToggle = new RadioButton("Simulation Limit");
+    RadioButton timeLimitToggle = new RadioButton("Time Limit");
+    simulationLimitToggle.setToggleGroup(limitationTypeGroup);
+    timeLimitToggle.setToggleGroup(limitationTypeGroup);
 
-    HBox searchTimeBox = new HBox(10);
+    VBox limitationParameterBox = new VBox(10);
+    limitationParameterBox.setPadding(new Insets(10));
+    limitationParameterBox.setMaxWidth(Double.MAX_VALUE);
+
+    // Spinner für Simulation Limit
+    Spinner<Integer> simulationSpinner = new Spinner<>(100, 1000, 500);
+    simulationSpinner.setEditable(true);
+    Label simulationLabel = new Label("Simulationen pro Zug");
+
+    // Slider für Time Limit
     Label searchTimeLabel = new Label("Search time 1s + ");
     Label sLabel = new Label("s");
-    Slider searchTimeSlider = new Slider();
-    searchTimeSlider.setMin(0);
-    searchTimeSlider.setMax(59);
+    Slider searchTimeSlider = new Slider(0, 59, 0);
     searchTimeSlider.setShowTickLabels(true);
     searchTimeSlider.setShowTickMarks(true);
     searchTimeSlider.setSnapToTicks(true);
     searchTimeSlider.setMajorTickUnit(5);
     searchTimeSlider.setMinorTickCount(1);
     searchTimeSlider.setPrefWidth(200);
-    searchTimeSlider.setStyle("-fx-font-weight: Bold;");
-    searchTimeSlider.valueProperty().addListener(
-        new ChangeListener<Number>() {
-          @Override
-          public void changed(ObservableValue<? extends Number> observable, Number oldValue,
-              Number newValue) {
-            searchTime = newValue.longValue();
-          }
-        }
-    );
 
-    searchTimeBox.getChildren().addAll(searchTimeLabel, searchTimeSlider, sLabel);
+    // Live-Label für Sliderwert
+    Label sliderValueLabel = new Label("0");
+    sliderValueLabel.setPrefWidth(30);
+    HBox searchTimeBox = new HBox(10, searchTimeLabel, searchTimeSlider, sliderValueLabel, sLabel);
+    searchTimeBox.setAlignment(Pos.CENTER_LEFT);
 
-    content.getChildren().addAll(searchTimeBox);
+    final long[] searchTime = {0};
+    searchTimeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+      searchTime[0] = newVal.longValue();
+      sliderValueLabel.setText(String.valueOf(searchTime[0]));
+    });
 
-    dialog.getDialogPane().setContent(content);
+    // Listener für Toggle-Änderung
+    limitationTypeGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+      limitationParameterBox.getChildren().clear();
+      if (newToggle == simulationLimitToggle) {
+        limitationParameterBox.getChildren().addAll(simulationLabel, simulationSpinner);
+      } else if (newToggle == timeLimitToggle) {
+        limitationParameterBox.getChildren().add(searchTimeBox);
+      }
+    });
+
+    limitationSettingsBox.getChildren().addAll(simulationLimitToggle, timeLimitToggle, limitationParameterBox);
+    contentBox.getChildren().add(limitationSettingsBox);
+
+    // ScrollPane sorgt dafür, dass Buttons sichtbar bleiben
+    ScrollPane scrollPane = new ScrollPane(contentBox);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setPrefViewportHeight(250); // Startgröße
+    dialog.getDialogPane().setContent(scrollPane);
 
     Optional<ButtonType> result = dialog.showAndWait();
     result.ifPresent(button -> {
       if (button == startButtonType) {
-        blackPlayer.setSearchTime(searchTime);
-        whitePlayer.setSearchTime(searchTime);
+        // Werte auslesen
+        if (simulationLimitToggle.isSelected()) {
+          int simulationsPerMove = simulationSpinner.getValue();
+          LOGGER.info("Simulationen pro Zug: {}", simulationsPerMove);
+          blackPlayer.setSimulationLimit(simulationsPerMove);
+          whitePlayer.setSimulationLimit(simulationsPerMove);
+          blackPlayer.setSearchTimeLimit(-1);
+          whitePlayer.setSearchTimeLimit(-1);
+        } else if (timeLimitToggle.isSelected()) {
+          long timePerMove = searchTime[0];
+          LOGGER.info("Search time: {}s", timePerMove);
+          blackPlayer.setSearchTimeLimit(timePerMove);
+          whitePlayer.setSearchTimeLimit(timePerMove);
+          blackPlayer.setSimulationLimit(-1);
+          whitePlayer.setSimulationLimit(-1);
+        }
+
         gameManager.newGame(
             Objects.requireNonNull(blackPlayer),
             Objects.requireNonNull(whitePlayer)
@@ -756,67 +795,138 @@ public class GameUI {
     });
   }
 
+
   private void showNewTournamentDialog() {
     Dialog<ButtonType> dialog = new Dialog<>();
     dialog.setTitle("Start new tournament");
     dialog.setHeaderText("Setup new tournament");
 
+    // Buttons
     ButtonType startButtonType = new ButtonType("Start", ButtonBar.ButtonData.OK_DONE);
     ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
     dialog.getDialogPane().getButtonTypes().addAll(startButtonType, cancelButtonType);
 
+    // Spieler
     Player blackPlayer = getBlackPlayer();
     Player whitePlayer = getWhitePlayer();
 
-    TitledPane tournamentSettingsPane = new TitledPane();
-    tournamentSettingsPane.setPadding(new Insets(10));
-    tournamentSettingsPane.setCollapsible(false);
-    tournamentSettingsPane.setText("Tournament Settings");
-
+    // --- Tournament Settings ---
     VBox tournamentSettingsBox = new VBox(10);
     tournamentSettingsBox.setPadding(new Insets(10));
-    VBox.setVgrow(tournamentSettingsBox, Priority.ALWAYS);
 
+    // Anzahl Spiele
     Label numberOfGamesLabel = new Label("Number of Games:");
-
     Spinner<Integer> numberOfGamesSpinner = new Spinner<>(1, 1000, 250, 10);
     numberOfGamesSpinner.setEditable(true);
-    numberOfGamesSpinner.valueProperty().addListener(new ChangeListener<Number>() {
-      @Override
-      public void changed(ObservableValue<? extends Number> observable, Number oldValue,
-          Number newValue) {
-        tournamentNumberOfGames = newValue.intValue();
+    numberOfGamesSpinner.valueProperty().addListener((obs, oldValue, newValue) ->
+        tournamentNumberOfGames = newValue.intValue()
+    );
+
+    // --- Limitation Settings ---
+    VBox limitationSettingsBox = new VBox(10);
+    limitationSettingsBox.setPadding(new Insets(10));
+
+    ToggleGroup limitationTypeGroup = new ToggleGroup();
+    RadioButton simulationLimitToggle = new RadioButton("Simulation Limit");
+    RadioButton timeLimitToggle = new RadioButton("Time Limit");
+    simulationLimitToggle.setToggleGroup(limitationTypeGroup);
+    timeLimitToggle.setToggleGroup(limitationTypeGroup);
+
+    // Container für dynamische Eingabe (Spinner oder Slider)
+    VBox limitationParameterBox = new VBox(10);
+    limitationParameterBox.setPadding(new Insets(10));
+    limitationParameterBox.setMaxWidth(Double.MAX_VALUE);
+
+    // --- Spinner für Simulation Limit ---
+    Spinner<Integer> simulationSpinner = new Spinner<>(100, 1000, 500);
+    simulationSpinner.setEditable(true);
+    Label simulationLabel = new Label("Simulationen pro Zug");
+    simulationLabel.setMaxWidth(Double.MAX_VALUE);
+
+    // --- Slider für Time Limit ---
+    Label searchTimeLabel = new Label("Search time 1s + ");
+    Label sLabel = new Label("s");
+    Slider searchTimeSlider = new Slider(0, 59, 0);
+    searchTimeSlider.setShowTickLabels(true);
+    searchTimeSlider.setShowTickMarks(true);
+    searchTimeSlider.setSnapToTicks(true);
+    searchTimeSlider.setMajorTickUnit(5);
+    searchTimeSlider.setMinorTickCount(1);
+    searchTimeSlider.setPrefWidth(200);
+
+    // Live Label für Sliderwert
+    Label sliderValueLabel = new Label("0");
+    sliderValueLabel.setPrefWidth(30);
+    HBox searchTimeBox = new HBox(10, searchTimeLabel, searchTimeSlider, sliderValueLabel, sLabel);
+    searchTimeBox.setAlignment(Pos.CENTER_LEFT);
+
+    final long[] searchTime = {0};
+    searchTimeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+      searchTime[0] = newVal.longValue();
+      sliderValueLabel.setText(String.valueOf(searchTime[0]));
+    });
+
+    // Listener für Toggle-Änderung
+    limitationTypeGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+      limitationParameterBox.getChildren().clear();
+      if (newToggle == simulationLimitToggle) {
+        limitationParameterBox.getChildren().addAll(simulationLabel, simulationSpinner);
+      } else if (newToggle == timeLimitToggle) {
+        limitationParameterBox.getChildren().add(searchTimeBox);
       }
     });
 
-    tournamentSettingsBox.getChildren().addAll(numberOfGamesLabel, numberOfGamesSpinner);
+    limitationSettingsBox.getChildren().addAll(simulationLimitToggle, timeLimitToggle, limitationParameterBox);
 
+    tournamentSettingsBox.getChildren().addAll(numberOfGamesLabel, numberOfGamesSpinner, limitationSettingsBox);
+
+    // Separator
     Separator separator = new Separator();
     separator.setOrientation(Orientation.HORIZONTAL);
-    VBox content = new VBox(10);
-    //TODO: Tournament Settings
-    assert blackPlayer != null;
-    assert whitePlayer != null;
-    content.getChildren().addAll(
-        new Label(blackPlayer.toString()),
-        new Label(whitePlayer.toString()),
+
+    // Content Box (Spieler + Settings)
+    VBox contentBox = new VBox(10);
+    contentBox.setPadding(new Insets(10));
+    contentBox.getChildren().addAll(
+        new Label("Black: " + blackPlayer.toString()),
+        new Label("White: " + whitePlayer.toString()),
         separator,
         tournamentSettingsBox
     );
 
-    dialog.getDialogPane().setContent(content);
+    // ScrollPane sorgt dafür, dass Buttons sichtbar bleiben
+    ScrollPane scrollPane = new ScrollPane(contentBox);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setPrefViewportHeight(300); // Startgröße
+    dialog.getDialogPane().setContent(scrollPane);
 
+    // Start Button Action
     Optional<ButtonType> result = dialog.showAndWait();
     result.ifPresent(button -> {
       if (button == startButtonType) {
+        if (simulationLimitToggle.isSelected()) {
+          int simulationsPerMove = simulationSpinner.getValue();
+          LOGGER.info("Simulationen pro Zug: {}", simulationsPerMove);
+          blackPlayer.setSimulationLimit(simulationsPerMove);
+          whitePlayer.setSimulationLimit(simulationsPerMove);
+          blackPlayer.setSearchTimeLimit(-1);
+          whitePlayer.setSearchTimeLimit(-1);
+        } else if (timeLimitToggle.isSelected()) {
+          long timePerMove = searchTime[0];
+          LOGGER.info("Search time: {}s", timePerMove);
+          blackPlayer.setSearchTimeLimit(timePerMove);
+          whitePlayer.setSearchTimeLimit(timePerMove);
+          blackPlayer.setSimulationLimit(-1);
+          whitePlayer.setSimulationLimit(-1);
+        }
         LOGGER.info("Start new tournament with {} games", tournamentNumberOfGames);
         gameManager.newTournament(blackPlayer, whitePlayer, tournamentNumberOfGames);
       } else {
         LOGGER.info("Cancel new tournament dialog");
       }
     });
-
   }
+
 
   private Player getBlackPlayer() {
     PLAYER_TYPE blackPlayerType = PLAYER_TYPE.valueOf(blackPlayerTypeSelector.getValue());
@@ -857,6 +967,7 @@ public class GameUI {
             selectedOptions,
             isBlackOmctsMastEnabled,
             isBlackOmctsRaveEnabled
+
         );
 
         return new OMCTSPlayer(

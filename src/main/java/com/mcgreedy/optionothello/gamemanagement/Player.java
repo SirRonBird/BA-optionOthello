@@ -11,6 +11,7 @@ public abstract class Player {
 
     protected Gamemanager gamemanager;
     protected long searchTimeLimit = 0;
+    protected int simulationLimit = 500;
 
     protected Player(Constants.PLAYER_COLOR color, Constants.PLAYER_TYPE type, Gamemanager gamemanager) {
         this.color = color;
@@ -28,6 +29,14 @@ public abstract class Player {
 
     public abstract Move getMove(Board board);
 
+    public void setSearchTimeLimit(long searchTimeLimit) {
+        this.searchTimeLimit = searchTimeLimit;
+    }
+
+    public void setSimulationLimit(int simulationLimit) {
+        this.simulationLimit = simulationLimit;
+    }
+
     @Override
     public String toString() {
         return "Player{" +
@@ -36,7 +45,5 @@ public abstract class Player {
                 '}';
     }
 
-    public void setSearchTime(long searchTimeLimit) {
-        this.searchTimeLimit = searchTimeLimit;
-    }
+
 }

@@ -1,5 +1,6 @@
 package com.mcgreedy.optionothello.ui;
 
+import com.mcgreedy.optionothello.dtos.OptionDTO;
 import com.mcgreedy.optionothello.dtos.SaveTournamentDTO;
 import com.mcgreedy.optionothello.dtos.SaveTournamentDTO.GameDetails;
 import com.mcgreedy.optionothello.dtos.SaveTournamentDTO.MoveDetails;
@@ -268,6 +269,16 @@ public class TournamentAnalysisUI {
       Label moveLabel = new Label("Move " + moveNumber);
       moveLabel.setStyle(LABEL_STYLE);
       moveDetailsContainer.getChildren().add(moveLabel);
+
+      int movePosition = moveDetails.getPosition();
+      Label movePositionLabel = new Label(movePosition + "");
+      movePositionLabel.setStyle("-fx-font-size: 16px;");
+      moveDetailsContainer.getChildren().add(movePositionLabel);
+
+      OptionDTO moveOption = moveDetails.getMoveStatistics().getOption();
+      Label moveOptionLabel = new Label(moveOption.getName());
+      moveOptionLabel.setStyle("-fx-font-size: 16px;");
+      moveDetailsContainer.getChildren().add(moveOptionLabel);
     }
   }
 

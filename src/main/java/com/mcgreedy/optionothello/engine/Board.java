@@ -22,7 +22,7 @@ public class Board {
 
     static final long FULL = -1L; // every 64 Bits set to 1
 
-    static final int[] DIRECTIONS = {-8, 8, 1, -1, -7, 7, -9, 9};
+    public static final int[] DIRECTIONS = {-8, 8, 1, -1, -7, 7, -9, 9};
     static final long LEFT_EDGE = 0x0101010101010101L;
     static final long RIGHT_EDGE = 0x8080808080808080L;
     //static final long TOP_EDGE = 0xffL;

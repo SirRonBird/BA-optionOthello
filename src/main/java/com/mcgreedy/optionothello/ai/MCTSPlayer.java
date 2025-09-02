@@ -34,8 +34,10 @@ public class MCTSPlayer extends Player {
 
         int simulations = 0;
 
-        //while (System.currentTimeMillis() - startTime < duration) {
-        while(simulations <= 500){
+        while (
+            (searchTimeLimit >= 0 && System.currentTimeMillis() - startTime < duration) ||
+                (simulationLimit > 0 && simulations <= simulationLimit)
+        ) {
             Node node = root;
             Board boardClone = board.clone();
             List<Move> rolloutMoves = new ArrayList<>();
