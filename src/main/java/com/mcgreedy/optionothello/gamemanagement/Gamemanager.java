@@ -1,9 +1,11 @@
 package com.mcgreedy.optionothello.gamemanagement;
 
+import com.mcgreedy.optionothello.ai.OMCTSPlayer;
 import com.mcgreedy.optionothello.engine.Game;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.ui.MainGUI;
 import com.mcgreedy.optionothello.utils.Constants;
+import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import com.mcgreedy.optionothello.utils.SaveGameUtils;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -64,6 +66,13 @@ public class Gamemanager {
       MainGUI.setPlayerToMove(currentPlayer);
     }
 
+    if(blackPlayer.getType() == PLAYER_TYPE.O_MCTS){
+      blackPlayer.resetMAST();
+    }
+    if (whitePlayer.getType() == PLAYER_TYPE.O_MCTS) {
+      whitePlayer.resetMAST();
+    }
+
     MainGUI.updatedBoardGrid(currentGame.getBlackBoard(), currentGame.getWhiteBoard(), -1);
     MainGUI.updateGameStandings(currentGame.whitePieces, currentGame.blackPieces);
 
@@ -88,7 +97,9 @@ public class Gamemanager {
     //LOGGER.info("{}|{} move on {}",currentPlayer.color,move.getColor(),move.getPosition());
     currentGame.updateBoard(move);
     currentGame.updateScore();
-    //LOGGER.info("New Board{}",currentGame.board);
+    if(currentPlayer.getType() == Constants.PLAYER_TYPE.HUMAN) {
+      LOGGER.info("New Board{}",currentGame.board);
+    }
 
     consecutivePasses = 0;
 

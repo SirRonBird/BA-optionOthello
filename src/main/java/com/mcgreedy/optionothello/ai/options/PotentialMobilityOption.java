@@ -29,7 +29,7 @@ public class PotentialMobilityOption implements Option {
 
   @Override public boolean isBoardInInitiationSet(Board b, Constants.PLAYER_COLOR c) { return true; }
   @Override public List<Board> initiationSet() { return Collections.emptyList(); }
-  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return false; }
+  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return b.isGameOver(); }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {

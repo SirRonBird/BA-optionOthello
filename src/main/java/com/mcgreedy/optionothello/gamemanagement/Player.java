@@ -37,6 +37,8 @@ public abstract class Player {
         this.simulationLimit = simulationLimit;
     }
 
+    public abstract void resetMAST();
+
     @Override
     public String toString() {
         return "Player{" +

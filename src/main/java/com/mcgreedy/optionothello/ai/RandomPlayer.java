@@ -52,6 +52,11 @@ public class RandomPlayer extends Player {
 
     }
 
+    @Override
+    public void resetMAST() {
+        //nothing to do here
+    }
+
     private List<Integer> getMoveIndices(long bitboard) {
         List<Integer> moves = new ArrayList<>();
 

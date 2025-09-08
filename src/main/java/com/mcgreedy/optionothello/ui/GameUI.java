@@ -11,17 +11,30 @@ import com.mcgreedy.optionothello.ai.OMCTSSettings;
 import com.mcgreedy.optionothello.ai.OMCTSPlayer;
 import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.ai.RandomPlayer;
+import com.mcgreedy.optionothello.ai.options.AntiDiagControlOption;
+import com.mcgreedy.optionothello.ai.options.BottomLeftCornerXOption;
+import com.mcgreedy.optionothello.ai.options.BottomLeftStableCornerOption;
+import com.mcgreedy.optionothello.ai.options.BottomRightCornerXOption;
+import com.mcgreedy.optionothello.ai.options.BottomRightStableCornerOption;
 import com.mcgreedy.optionothello.ai.options.CenterControlOption;
 import com.mcgreedy.optionothello.ai.options.CornerOption;
 import com.mcgreedy.optionothello.ai.options.DiagonalControlOption;
 import com.mcgreedy.optionothello.ai.options.FrontierControlOption;
 import com.mcgreedy.optionothello.ai.options.HeatmapOption;
+import com.mcgreedy.optionothello.ai.options.MainDiagControlOption;
 import com.mcgreedy.optionothello.ai.options.MaxFlipsOption;
+import com.mcgreedy.optionothello.ai.options.MaximizeMobilityOption;
+import com.mcgreedy.optionothello.ai.options.MinimizeEnemyMobilityOption;
 import com.mcgreedy.optionothello.ai.options.MobilityOption;
 import com.mcgreedy.optionothello.ai.options.ParityOption;
 import com.mcgreedy.optionothello.ai.options.PotentialMobilityOption;
 import com.mcgreedy.optionothello.ai.options.PreventOpponentCornerOption;
+import com.mcgreedy.optionothello.ai.options.QuietMoveOption;
 import com.mcgreedy.optionothello.ai.options.StableDiscsOption;
+import com.mcgreedy.optionothello.ai.options.TopLeftCornerXOption;
+import com.mcgreedy.optionothello.ai.options.TopLeftStableCornerOption;
+import com.mcgreedy.optionothello.ai.options.TopRightCornerXOption;
+import com.mcgreedy.optionothello.ai.options.TopRightStableCornerOption;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
 import com.mcgreedy.optionothello.gamemanagement.Player;
@@ -136,17 +149,22 @@ public class GameUI {
   boolean isBlackOmctsMastEnabled = false;
   boolean isWhiteOmctsMastEnabled = false;
   List<Option> options = List.of(
-      new CornerOption(),
-      new PreventOpponentCornerOption(),
+      new TopLeftCornerXOption(),
+      new TopRightCornerXOption(),
+      new BottomLeftCornerXOption(),
+      new BottomRightCornerXOption(),
+      new TopLeftStableCornerOption(),
+      new TopRightStableCornerOption(),
+      new BottomLeftStableCornerOption(),
+      new BottomRightStableCornerOption(),
+      new QuietMoveOption(),
+      new MaximizeMobilityOption(),
+      new MinimizeEnemyMobilityOption(),
       new CenterControlOption(),
-      new DiagonalControlOption(),
-      new FrontierControlOption(),
-      new HeatmapOption(),
+      new MainDiagControlOption(),
+      new AntiDiagControlOption(),
       new MaxFlipsOption(),
-      new MobilityOption(),
-      new ParityOption(),
-      new PotentialMobilityOption(),
-      new StableDiscsOption()
+      new PreventOpponentCornerOption()
   );
 
   // Game Parameter

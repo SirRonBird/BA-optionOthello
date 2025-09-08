@@ -20,9 +20,17 @@ public class StableDiscsOption implements Option {
 
   private static final String NAME = "StableDiscsOption";
 
-  @Override public boolean isBoardInInitiationSet(Board b, Constants.PLAYER_COLOR c) { return true; }
+  private static final Board CORNER_MASK = new Board(
+      "Corners", true
+  );
+
+  @Override public boolean isBoardInInitiationSet(Board b, Constants.PLAYER_COLOR c) {
+    CORNER_MASK.mask = 0x8100000000000081L;
+    // Only start if at least one corner is taken.
+    return b.boardIsHittingMask(CORNER_MASK,c);
+  }
   @Override public List<Board> initiationSet() { return Collections.emptyList(); }
-  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return false; }
+  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return b.isGameOver(); }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
@@ -41,7 +49,7 @@ public class StableDiscsOption implements Option {
   private int estimateStableEdgeCount(Board b, Constants.PLAYER_COLOR me) {
     long bits = (me == Constants.PLAYER_COLOR.WHITE) ? b.getWhite() : b.getBlack();
     int sum = 0;
-    if (((bits >>> 0) & 1L)  != 0) { sum += run(bits, 0, +1); sum += run(bits, 0, +8); }
+    if (((bits) & 1L)  != 0) { sum += run(bits, 0, +1); sum += run(bits, 0, +8); }
     if (((bits >>> 7) & 1L)  != 0) { sum += run(bits, 7, -1); sum += run(bits, 7, +8); }
     if (((bits >>> 56) & 1L) != 0) { sum += run(bits,56, +1); sum += run(bits,56, -8); }
     if (((bits >>> 63) & 1L) != 0) { sum += run(bits,63, -1); sum += run(bits,63, -8); }

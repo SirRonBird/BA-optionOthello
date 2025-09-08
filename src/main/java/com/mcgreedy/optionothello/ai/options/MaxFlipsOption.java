@@ -21,21 +21,30 @@ public class MaxFlipsOption implements Option {
 
   private static final String NAME = "MaxFlipsOption";
 
+  private static final Random rand  = new Random();
+
   @Override public boolean isBoardInInitiationSet(Board b, Constants.PLAYER_COLOR c) { return true; }
   @Override public List<Board> initiationSet() { return Collections.emptyList(); }
-  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return false; }
+  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return !b.isGameOver(); }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    int discs = board.getWhiteCount() + board.getBlackCount();
-    boolean endgame = discs >= 50;
-
     Constants.PLAYER_COLOR me = possibleMoves.getFirst().getColor();
-
-    return (endgame
-        ? possibleMoves.stream().max(Comparator.comparingInt(m -> flipDelta(board, m, me)))
-        : possibleMoves.stream().min(Comparator.comparingInt(m -> flipDelta(board, m, me)))
-    ).orElse(possibleMoves.get(new Random().nextInt(possibleMoves.size())));
+    Collections.shuffle(possibleMoves);
+    Move bestMove = null;
+    int mostFlips = Integer.MIN_VALUE;
+    for(Move move : possibleMoves) {
+      int moveFlips = flipDelta(board,move,me);
+      if(moveFlips > mostFlips) {
+        mostFlips = moveFlips;
+        bestMove = move;
+      }
+    }
+    if(bestMove != null) {
+      return bestMove;
+    } else {
+      return possibleMoves.get(rand.nextInt(possibleMoves.size()));
+    }
   }
 
   private int flipDelta(Board b, Move m, Constants.PLAYER_COLOR me) {

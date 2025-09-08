@@ -1,5 +1,4 @@
 module com.mcgreedy.optionothello {
-  requires javafx.controls;
   requires javafx.fxml;
 
   requires org.controlsfx.controls;
@@ -16,6 +15,7 @@ module com.mcgreedy.optionothello {
   requires org.graalvm.polyglot;
   requires java.scripting;
   requires java.prefs;
+  requires eu.hansolo.tilesfx;
 
   // Für Jackson: Erlaube Zugriff auf Felder/Klassen via Reflection
   opens com.mcgreedy.optionothello.engine to com.fasterxml.jackson.databind;

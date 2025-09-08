@@ -25,6 +25,11 @@ public class HumanPlayer extends Player {
         return move;
     }
 
+    @Override
+    public void resetMAST() {
+        // nothing to do here
+    }
+
 
     @Override
     public String toString() {

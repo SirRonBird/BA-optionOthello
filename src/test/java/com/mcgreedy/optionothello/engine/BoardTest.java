@@ -169,4 +169,24 @@ class BoardTest {
 
 
     }
+
+    @Test
+    void testWrongUpdate(){
+        Board testBoard = new Board(
+            17695668175360L,
+            17246978048L
+        );
+
+        Board correctBoard = new Board(
+            69122392576L,
+            9024843047501824L
+        );
+
+        testBoard.updateBoard(53,true);
+        System.out.println(testBoard);
+
+        assertEquals(correctBoard.getBlack(), testBoard.getBlack());
+        assertEquals(correctBoard.getWhite(), testBoard.getWhite());
+
+    }
 }

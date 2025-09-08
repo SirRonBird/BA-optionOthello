@@ -19,6 +19,10 @@ public class MCTSPlayer extends Player {
     private static final Logger LOGGER = LogManager.getLogger(MCTSPlayer.class);
     private int nodeCount = 0;
 
+    //MAST
+    private Map<Move, Integer> mastVisits = new HashMap<>();
+    private Map<Move, Double> mastValues = new HashMap<>();
+
     public MCTSPlayer(PLAYER_COLOR color, PLAYER_TYPE type, Gamemanager gamemanager, MCTSSettings settings) {
         super(color, type, gamemanager);
         this.settings = settings;
@@ -70,7 +74,12 @@ public class MCTSPlayer extends Player {
                     simColor = toggleColor(simColor);
                     continue;
                 }
-                Move move = moves.get(rand.nextInt(moves.size()));
+                Move move;
+                if(settings.useMast()){
+                    move = selectMoveWithMAST(moves);
+                } else {
+                    move = moves.get(rand.nextInt(moves.size()));
+                }
                 boardClone.updateBoard(move.getPosition(), move.getColor() == PLAYER_COLOR.WHITE);
                 rolloutMoves.add(move);
                 simColor = toggleColor(simColor);
@@ -104,6 +113,21 @@ public class MCTSPlayer extends Player {
                     }
                 }
             }
+
+            // Update MAST values if enabled
+            if (settings.useMast()) {
+                for (Move m : rolloutMoves) {
+                    int visitCount = mastVisits.getOrDefault(m, 0);
+                    double value = mastValues.getOrDefault(m, 0.0);
+                    mastVisits.put(m, visitCount + 1);
+                    if (winner == this.color) {
+                        mastValues.put(m, value + 1.0);
+                    } else {
+                        mastValues.put(m, value - 1.0);
+                    }
+                }
+            }
+
         simulations++;
         }
 
@@ -119,6 +143,35 @@ public class MCTSPlayer extends Player {
         MoveStatistics stats = new MoveStatistics(findMaxDepth(root), null, countNodes(root), searchTime);
         move.setStatistics(stats);
         return move;
+    }
+
+    private Move selectMoveWithMAST(List<Move> moves) {
+        double tau = 10; // Temperatur
+        double sum = 0.0;
+        double[] scores = new double[moves.size()];
+
+        for (int i = 0; i < moves.size(); i++) {
+            Move m = moves.get(i);
+            double q = mastValues.getOrDefault(m, 0.0) / (mastVisits.getOrDefault(m, 1));
+            scores[i] = Math.exp(q / tau);
+            sum += scores[i];
+        }
+
+        double r = Math.random() * sum;
+        for (int i = 0; i < moves.size(); i++) {
+            r -= scores[i];
+            if (r <= 0) return moves.get(i);
+        }
+
+        return moves.get(moves.size() - 1);
+    }
+
+    @Override
+    public void resetMAST() {
+        if(settings.useMast()){
+            mastValues.clear();
+            mastVisits.clear();
+        }
     }
 
     private PLAYER_COLOR toggleColor(PLAYER_COLOR color) {
@@ -187,7 +240,8 @@ public class MCTSPlayer extends Player {
         }
 
         Node bestChild() {
-            return children.stream().max(Comparator.comparingInt(c -> c.visits)).orElse(null);
+            LOGGER.info("Children: {}", children);
+            return children.stream().max(Comparator.comparingInt(c -> c.wins/c.visits)).orElse(null);
         }
 
         private double uctRaveValue(Node child) {
@@ -212,6 +266,10 @@ public class MCTSPlayer extends Player {
             return qValue + exploration;
         }
 
+        @Override
+        public String toString() {
+            return "{ Node (" + move.getPosition() + ") " + wins + ":" + visits + "}\n";
+        }
     }
 }
 

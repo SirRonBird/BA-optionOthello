@@ -53,6 +53,8 @@ public class OMCTSPlayer extends Player {
     LOGGER.info("Created OMCTSPlayer with settings: {}", settings);
   }
 
+
+
   @Override
   public Move getMove(Board board) {
     Node root = new Node(null, null, board, color, -1);
@@ -140,6 +142,14 @@ public class OMCTSPlayer extends Player {
     return bestMove;
   }
 
+  @Override
+  public void resetMAST() {
+    if(settings.useMast()){
+      mastValues.clear();
+      mastVisits.clear();
+    }
+  }
+
   public static int findMaxDepth(Node root) {
     if (root == null) return Integer.MIN_VALUE;
 
@@ -183,11 +193,19 @@ public class OMCTSPlayer extends Player {
           PLAYER_TYPE.O_MCTS
       );
     }
-    Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
+    LOGGER.info("Childs: {}", state.children);
+    /*Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
         c -> c.value / (c.visits + 1e-6)
+    )).orElse(state.children.get(rand.nextInt(state.children.size())));*/
+    /*Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
+        c -> c.visits
+    )).orElse(state.children.get(rand.nextInt(state.children.size())));*/
+    Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
+        c -> (double) c.wins/c.visits
     )).orElse(state.children.get(rand.nextInt(state.children.size())));
     Move bestMove = selectedChild.move;
     bestMove.setOption(selectedChild.optionFollowed);
+    LOGGER.info("Selected Move: {}", bestMove.getPosition());
     return bestMove;
   }
 
@@ -196,7 +214,7 @@ public class OMCTSPlayer extends Player {
 
     //return children.stream().max(Comparator.comparingDouble(OMCTSPlayer::uctValue)).orElse(children.get(rand.nextInt(children.size())));
     return children.stream().max((c1,c2) -> Double.compare(uct(c1), uct(c2)))
-        .orElse(children.get(rand.  nextInt(children.size())));
+        .orElse(children.get(rand.nextInt(children.size())));
   }
 
   private double uct(Node child){
@@ -268,7 +286,7 @@ public class OMCTSPlayer extends Player {
       } else if (currentSimNode.hasFinishedOption()) {
         if(settings.useMast()){
           //select Move with MAST
-          chosenMove = selectMoveWithMAST(moves, simColor);
+          chosenMove = selectMoveWithMAST(moves);
         } else {
           chosenMove = moves.get(rand.nextInt(moves.size()));
         }
@@ -294,7 +312,7 @@ public class OMCTSPlayer extends Player {
         movesInRollout, winner);
   }
 
-  private Move selectMoveWithMAST(List<Move> moves, PLAYER_COLOR color) {
+  private Move selectMoveWithMAST(List<Move> moves) {
     double tau = 10; // Temperatur
     double sum = 0.0;
     double[] scores = new double[moves.size()];
@@ -411,7 +429,7 @@ public class OMCTSPlayer extends Player {
 
     @Override
     public String toString() {
-      return "[ Node (" + number + ") [" + depth + "]\n" + children;
+      return "{ Node (" + move.getPosition() + ") [" + optionFollowed.getName() + "] " + value + ":" + wins + ":" + visits + "}\n";
     }
   }
 

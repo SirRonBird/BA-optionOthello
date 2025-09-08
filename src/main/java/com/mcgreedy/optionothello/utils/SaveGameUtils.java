@@ -102,12 +102,17 @@ public class SaveGameUtils {
 
                 MoveStatistics statistics = new SaveGameDTO.MoveStatistics();
                 com.mcgreedy.optionothello.engine.MoveStatistics moveStatistics  = move.getStatistics();
-
-                statistics.setSearchDepth(moveStatistics.getSearchDepth());
-                statistics.setSearchTime(moveStatistics.getSearchTime());
-                statistics.setSearchedNodes(moveStatistics.getSearchedNodes());
-
-                statistics.setOption(OptionDTO.fromOption(moveStatistics.getOption()));
+                if(moveStatistics != null) {
+                    statistics.setSearchDepth(moveStatistics.getSearchDepth());
+                    statistics.setSearchTime(moveStatistics.getSearchTime());
+                    statistics.setSearchedNodes(moveStatistics.getSearchedNodes());
+                    statistics.setOption(OptionDTO.fromOption(moveStatistics.getOption()));
+                } else {
+                    statistics.setSearchDepth(0);
+                    statistics.setSearchTime(0);
+                    statistics.setSearchedNodes(0);
+                    statistics.setOption(OptionDTO.fromOption(null));
+                }
 
                 moveDetails.setMoveStatistics(statistics);
 

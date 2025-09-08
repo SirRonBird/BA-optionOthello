@@ -31,8 +31,8 @@ public class Board {
     static final long START_WHITE = 0x0000001008000000L;
     static final long START_BLACK = 0x0000000810000000L;
 
-    /*static final long START_WHITE = 2076L;
-    static final long START_BLACK = 11320813181403648L;*/
+    /*static final long START_WHITE = 17246978048L;
+    static final long START_BLACK = 17695668175360L*/;
 
     public long startWhite = START_WHITE;
     public long startBlack = START_BLACK;
