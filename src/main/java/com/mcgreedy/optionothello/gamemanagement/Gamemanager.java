@@ -66,10 +66,10 @@ public class Gamemanager {
       MainGUI.setPlayerToMove(currentPlayer);
     }
 
-    if(blackPlayer.getType() == PLAYER_TYPE.O_MCTS){
+    if(blackPlayer.getType() == PLAYER_TYPE.O_MCTS || blackPlayer.getType() == PLAYER_TYPE.MCTS){
       blackPlayer.resetMAST();
     }
-    if (whitePlayer.getType() == PLAYER_TYPE.O_MCTS) {
+    if (whitePlayer.getType() == PLAYER_TYPE.O_MCTS || whitePlayer.getType() == PLAYER_TYPE.MCTS) {
       whitePlayer.resetMAST();
     }
 

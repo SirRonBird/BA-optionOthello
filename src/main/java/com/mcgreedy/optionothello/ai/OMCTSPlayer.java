@@ -302,18 +302,19 @@ public class OMCTSPlayer extends Player {
     PLAYER_COLOR winner = currentSimNode.board.getWinner();
 
     //MAST-Update
-    for(Move m : movesInRollout){
-      mastVisits.put(m,mastVisits.getOrDefault(m,0) +1);
-      double reward = winner == this.color ? 1.0 : -1.0;
-      mastValues.put(m,mastValues.getOrDefault(m,0.0) + reward);
+    if(settings.useMast()) {
+      for (Move m : movesInRollout) {
+        mastVisits.put(m, mastVisits.getOrDefault(m, 0) + 1);
+        double reward = winner == this.color ? 1.0 : -1.0;
+        mastValues.put(m, mastValues.getOrDefault(m, 0.0) + reward);
+      }
     }
-
     return new RolloutResult(currentSimNode.board.getValue(start.color == WHITE),
         movesInRollout, winner);
   }
 
   private Move selectMoveWithMAST(List<Move> moves) {
-    double tau = 10; // Temperatur
+    double tau = 1.0; // Temperatur
     double sum = 0.0;
     double[] scores = new double[moves.size()];
 

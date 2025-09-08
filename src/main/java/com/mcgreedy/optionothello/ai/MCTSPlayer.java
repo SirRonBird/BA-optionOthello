@@ -117,14 +117,9 @@ public class MCTSPlayer extends Player {
             // Update MAST values if enabled
             if (settings.useMast()) {
                 for (Move m : rolloutMoves) {
-                    int visitCount = mastVisits.getOrDefault(m, 0);
-                    double value = mastValues.getOrDefault(m, 0.0);
-                    mastVisits.put(m, visitCount + 1);
-                    if (winner == this.color) {
-                        mastValues.put(m, value + 1.0);
-                    } else {
-                        mastValues.put(m, value - 1.0);
-                    }
+                    mastVisits.put(m, mastVisits.getOrDefault(m, 0) + 1);
+                    double reward = winner == this.color ? 1.0 : -1.0;
+                    mastValues.put(m, mastValues.getOrDefault(m, 0.0) + reward);
                 }
             }
 
@@ -241,7 +236,7 @@ public class MCTSPlayer extends Player {
 
         Node bestChild() {
             LOGGER.info("Children: {}", children);
-            return children.stream().max(Comparator.comparingInt(c -> c.wins/c.visits)).orElse(null);
+            return children.stream().max(Comparator.comparingDouble(c ->(double) c.wins/c.visits)).orElse(null);
         }
 
         private double uctRaveValue(Node child) {
