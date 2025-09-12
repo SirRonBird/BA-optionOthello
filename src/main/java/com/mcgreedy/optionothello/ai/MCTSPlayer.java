@@ -7,6 +7,10 @@ import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -137,6 +141,13 @@ public class MCTSPlayer extends Player {
         long searchTime = System.currentTimeMillis() - startTime;
         MoveStatistics stats = new MoveStatistics(findMaxDepth(root), null, countNodes(root), searchTime);
         move.setStatistics(stats);
+
+        /*try {
+            exportTreeToDot(root);}
+        catch (IOException e) {
+            LOGGER.error("Failed to save tree as Dot: {}", e.getMessage());
+        }*/
+
         return move;
     }
 
@@ -264,6 +275,44 @@ public class MCTSPlayer extends Player {
         @Override
         public String toString() {
             return "{ Node (" + move.getPosition() + ") " + wins + ":" + visits + "}\n";
+        }
+    }
+
+    public static void exportTreeToDot(Node root) throws IOException {
+        String projectDir = System.getProperty("user.dir");
+        File directory = new File(projectDir, "savegames/treevis");
+
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        int depth = findMaxDepth(root);
+        int nodes = countNodes(root);
+        long timestamp = System.currentTimeMillis();
+
+        File file = new File(directory,
+            String.format("mcts_tree_d%d_n%d_%d.dot", depth, nodes, timestamp));
+
+        try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
+            out.println("digraph G {");
+            Queue<Node> queue = new LinkedList<>();
+            queue.add(root);
+
+            while (!queue.isEmpty()) {
+                Node current = queue.poll();
+                String currentId = "n" + System.identityHashCode(current);
+
+                // Knoten selbst (nur Punkt)
+                out.println("  " + currentId + " [label=\"\", shape=circle, width=0.2, style=filled, fillcolor=black];");
+
+                for (Node child : current.children) {
+                    String childId = "n" + System.identityHashCode(child);
+                    out.println("  " + currentId + " -> " + childId + ";");
+                    queue.add(child);
+                }
+            }
+
+            out.println("}");
         }
     }
 }

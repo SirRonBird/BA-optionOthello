@@ -10,6 +10,10 @@ import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -138,6 +142,11 @@ public class OMCTSPlayer extends Player {
     bestMove.getStatistics().setSearchedNodes(countNodes(root));
     bestMove.setSearchDepth(findMaxDepth(root));
     bestMove.getStatistics().setOption(bestMove.getOption());
+    /*try {
+      exportTreeToDot(root, getBestNode(root));}
+    catch (IOException e) {
+      LOGGER.error("Failed to save tree as Dot: {}", e.getMessage());
+    }*/
 
     return bestMove;
   }
@@ -207,6 +216,25 @@ public class OMCTSPlayer extends Player {
     bestMove.setOption(selectedChild.optionFollowed);
     LOGGER.info("Selected Move: {}", bestMove.getPosition());
     return bestMove;
+  }
+
+  private Node getBestNode(Node state) {
+    //get the child with the best value
+
+    if(state.children == null || state.children.isEmpty()){
+      //return passmove
+      return null;
+    }
+    LOGGER.info("Childs: {}", state.children);
+    /*Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
+        c -> c.value / (c.visits + 1e-6)
+    )).orElse(state.children.get(rand.nextInt(state.children.size())));*/
+    /*Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
+        c -> c.visits
+    )).orElse(state.children.get(rand.nextInt(state.children.size())));*/
+    return state.children.stream().max(Comparator.comparingDouble(
+        c -> (double) c.wins/c.visits
+    )).orElse(state.children.get(rand.nextInt(state.children.size())));
   }
 
   private Node selectChild(List<Node> children) {
@@ -446,4 +474,55 @@ public class OMCTSPlayer extends Player {
       this.winner = winner;
     }
   }
+
+  public static void exportTreeToDot(Node root, Node highlight) throws IOException {
+    String projectDir = System.getProperty("user.dir");
+    File directory = new File(projectDir, "savegames/treevis");
+    if (!directory.exists()) {
+      directory.mkdirs();
+    }
+
+    int depth = OMCTSPlayer.findMaxDepth(root);
+    int nodes = OMCTSPlayer.countNodes(root);
+    long timestamp = System.currentTimeMillis();
+
+    // Heuristik: Breite ~ Knotenanzahl / Tiefe
+    double avgBranching = (depth > 0) ? (double) nodes / depth : nodes;
+    String layout = (avgBranching > depth * 1.5) ? "LR" : "TB";
+
+    File file = new File(directory,
+        String.format("omcts_tree_d%d_n%d_%d.dot", depth, nodes, timestamp));
+
+    try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
+      out.println("digraph G {");
+      out.printf("  graph [rankdir=TB, nodesep=0.05, ranksep=0.1];%n");
+      out.println("  node [label=\"\", shape=circle, width=0.1,height=0.1, style=filled, fillcolor=black];");
+
+      Queue<Node> queue = new LinkedList<>();
+      queue.add(root);
+
+      while (!queue.isEmpty()) {
+        Node current = queue.poll();
+        String currentId = "n" + System.identityHashCode(current);
+
+        // Knoten-Attribute
+        String attrs = "";
+        if (current == highlight) {
+          attrs = " [fillcolor=red, width=0.2]"; // Highlight-Knoten
+        }
+        out.println("  " + currentId + attrs + ";");
+
+        for (Node child : current.children) {
+          String childId = "n" + System.identityHashCode(child);
+          out.println("  " + currentId + " -> " + childId + ";");
+          queue.add(child);
+        }
+      }
+
+      out.println("}");
+    }
+
+    System.out.println("Exported tree to " + file.getAbsolutePath());
+  }
+
 }

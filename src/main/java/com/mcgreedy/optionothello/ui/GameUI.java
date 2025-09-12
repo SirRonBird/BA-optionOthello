@@ -736,7 +736,7 @@ public class GameUI {
     limitationParameterBox.setMaxWidth(Double.MAX_VALUE);
 
     // Spinner für Simulation Limit
-    Spinner<Integer> simulationSpinner = new Spinner<>(100, 1000, 500);
+    Spinner<Integer> simulationSpinner = new Spinner<>(100, 5000, 500);
     simulationSpinner.setEditable(true);
     Label simulationLabel = new Label("Simulationen pro Zug");
 
@@ -834,7 +834,7 @@ public class GameUI {
 
     // Anzahl Spiele
     Label numberOfGamesLabel = new Label("Number of Games:");
-    Spinner<Integer> numberOfGamesSpinner = new Spinner<>(1, 1000, 250, 10);
+    Spinner<Integer> numberOfGamesSpinner = new Spinner<>(1, 5000, 250, 10);
     numberOfGamesSpinner.setEditable(true);
     numberOfGamesSpinner.valueProperty().addListener((obs, oldValue, newValue) ->
         tournamentNumberOfGames = newValue.intValue()
@@ -856,7 +856,7 @@ public class GameUI {
     limitationParameterBox.setMaxWidth(Double.MAX_VALUE);
 
     // --- Spinner für Simulation Limit ---
-    Spinner<Integer> simulationSpinner = new Spinner<>(100, 1000, 500);
+    Spinner<Integer> simulationSpinner = new Spinner<>(100, 5000, 500);
     simulationSpinner.setEditable(true);
     Label simulationLabel = new Label("Simulationen pro Zug");
     simulationLabel.setMaxWidth(Double.MAX_VALUE);
