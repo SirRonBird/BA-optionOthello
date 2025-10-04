@@ -1,7 +1,8 @@
-package com.mcgreedy.optionothello.gamemanagement;
+package com.mcgreedy.optionothello.ai;
 
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.ui.MainGUI;
 import com.mcgreedy.optionothello.utils.Constants;
 
@@ -29,7 +30,6 @@ public class HumanPlayer extends Player {
     public void resetMAST() {
         // nothing to do here
     }
-
 
     @Override
     public String toString() {

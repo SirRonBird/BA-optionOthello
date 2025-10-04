@@ -7,13 +7,8 @@ import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.engine.MoveStatistics;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
-import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,7 +30,6 @@ public class OMCTSPlayer extends Player {
   List<Option> expandedOptions = new ArrayList<>(); //m
   Node currentNode; //s
   OMCTSSettings settings;
-  static double explorationConstant;
 
   Random rand = new Random();
   int nodeCounter=0;
@@ -52,7 +46,6 @@ public class OMCTSPlayer extends Player {
     super(color, type, gamemanager);
     this.settings = settings;
     this.options = settings.optionList();
-    explorationConstant = settings.explorationConstant();
     this.currentNode = null;
     LOGGER.info("Created OMCTSPlayer with settings: {}", settings);
   }
@@ -218,25 +211,6 @@ public class OMCTSPlayer extends Player {
     return bestMove;
   }
 
-  private Node getBestNode(Node state) {
-    //get the child with the best value
-
-    if(state.children == null || state.children.isEmpty()){
-      //return passmove
-      return null;
-    }
-    LOGGER.info("Childs: {}", state.children);
-    /*Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
-        c -> c.value / (c.visits + 1e-6)
-    )).orElse(state.children.get(rand.nextInt(state.children.size())));*/
-    /*Node selectedChild = state.children.stream().max(Comparator.comparingDouble(
-        c -> c.visits
-    )).orElse(state.children.get(rand.nextInt(state.children.size())));*/
-    return state.children.stream().max(Comparator.comparingDouble(
-        c -> (double) c.wins/c.visits
-    )).orElse(state.children.get(rand.nextInt(state.children.size())));
-  }
-
   private Node selectChild(List<Node> children) {
     //LOGGER.info("Child selection");
 
@@ -251,7 +225,7 @@ public class OMCTSPlayer extends Player {
 
     // Standard UCT-Exploration
     double exploration = settings.explorationConstant() *
-        Math.sqrt(2 * Math.log(child.parent.visits + 1) / (child.visits + 1e-6));
+        Math.sqrt(2 * Math.log((double) child.parent.visits + 1) / (child.visits + 1e-6));
 
     if (settings.useRave() && child.move != null) {
       // RAVE-Wert = kumulativer AMA-Faktor / Anzahl der AMA-Besuche
@@ -260,7 +234,7 @@ public class OMCTSPlayer extends Player {
       double amaf = (raveN > 0) ? raveW / raveN : 0.0;
 
       // Beta-Mischung zwischen qValue und AMA-Faktor
-      double k = 1000.0; // wie beim MCTS
+      double k = settings.k();
       double beta = Math.sqrt(k / (3.0 * child.visits + k));
 
       double mixedValue = (1 - beta) * qValue + beta * amaf;
@@ -342,7 +316,7 @@ public class OMCTSPlayer extends Player {
   }
 
   private Move selectMoveWithMAST(List<Move> moves) {
-    double tau = 1.0; // Temperatur
+    double tau = settings.tau(); // Temperatur
     double sum = 0.0;
     double[] scores = new double[moves.size()];
 
@@ -363,7 +337,7 @@ public class OMCTSPlayer extends Player {
   }
 
   private void backUp(Node start, int delta, List<Move> movesInRollout, PLAYER_COLOR winner) {
-    int d_sprime = start.depth;
+    int dSprime = start.depth;
 
     for (Node n = start; n != null; n = n.parent) {
       n.visits++;
@@ -376,7 +350,7 @@ public class OMCTSPlayer extends Player {
       }
 
       // Diskontierter Value (spezifisch für OMCTS)
-      int depthDiff = d_sprime - n.depth;
+      int depthDiff = dSprime - n.depth;
       double discountedDelta = delta * Math.pow(settings.discountFactor(), depthDiff);
       n.value += discountedDelta;
 
@@ -473,56 +447,6 @@ public class OMCTSPlayer extends Player {
       this.movesInRollout = movesInRollout;
       this.winner = winner;
     }
-  }
-
-  public static void exportTreeToDot(Node root, Node highlight) throws IOException {
-    String projectDir = System.getProperty("user.dir");
-    File directory = new File(projectDir, "savegames/treevis");
-    if (!directory.exists()) {
-      directory.mkdirs();
-    }
-
-    int depth = OMCTSPlayer.findMaxDepth(root);
-    int nodes = OMCTSPlayer.countNodes(root);
-    long timestamp = System.currentTimeMillis();
-
-    // Heuristik: Breite ~ Knotenanzahl / Tiefe
-    double avgBranching = (depth > 0) ? (double) nodes / depth : nodes;
-    String layout = (avgBranching > depth * 1.5) ? "LR" : "TB";
-
-    File file = new File(directory,
-        String.format("omcts_tree_d%d_n%d_%d.dot", depth, nodes, timestamp));
-
-    try (PrintWriter out = new PrintWriter(new FileWriter(file))) {
-      out.println("digraph G {");
-      out.printf("  graph [rankdir=TB, nodesep=0.05, ranksep=0.1];%n");
-      out.println("  node [label=\"\", shape=circle, width=0.1,height=0.1, style=filled, fillcolor=black];");
-
-      Queue<Node> queue = new LinkedList<>();
-      queue.add(root);
-
-      while (!queue.isEmpty()) {
-        Node current = queue.poll();
-        String currentId = "n" + System.identityHashCode(current);
-
-        // Knoten-Attribute
-        String attrs = "";
-        if (current == highlight) {
-          attrs = " [fillcolor=red, width=0.2]"; // Highlight-Knoten
-        }
-        out.println("  " + currentId + attrs + ";");
-
-        for (Node child : current.children) {
-          String childId = "n" + System.identityHashCode(child);
-          out.println("  " + currentId + " -> " + childId + ";");
-          queue.add(child);
-        }
-      }
-
-      out.println("}");
-    }
-
-    System.out.println("Exported tree to " + file.getAbsolutePath());
   }
 
 }

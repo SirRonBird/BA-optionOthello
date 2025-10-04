@@ -1,7 +1,6 @@
 package com.mcgreedy.optionothello.engine;
 
 import com.mcgreedy.optionothello.ai.Option;
-import com.mcgreedy.optionothello.ai.Option_js;
 
 public class MoveStatistics {
   private int searchDepth;

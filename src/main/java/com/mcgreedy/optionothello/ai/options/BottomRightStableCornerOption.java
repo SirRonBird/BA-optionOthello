@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to play stable disk of from the bottom right corner. Option selects
+ * move which is stable along one of the edges. If no stable move is possible
+ * or both edges are full the option is finished
+ */
+
 public class BottomRightStableCornerOption implements Option {
 
   private static final String NAME = "BottomRightStableCorner";
@@ -21,7 +27,7 @@ public class BottomRightStableCornerOption implements Option {
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
     Board cornerMask = new Board("BottomLeftCorner", true);
-    cornerMask.mask = BOTTOMRIGHT_CORNER;
+    cornerMask.setMask(BOTTOMRIGHT_CORNER);
 
     long possibleMovesBitBoard = board.generateAllPossibleMoves(playerColor == PLAYER_COLOR.WHITE);
 
@@ -45,7 +51,6 @@ public class BottomRightStableCornerOption implements Option {
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    LOGGER.info(NAME);
     //Filter Moves to only take those on the edges into account
     List<Move> movesOnBottomEdge = new ArrayList<>();
     List<Move> movesOnRightEdge = new ArrayList<>();

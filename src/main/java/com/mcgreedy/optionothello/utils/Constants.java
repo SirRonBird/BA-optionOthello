@@ -7,7 +7,10 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public final class Constants {
-    private Constants() {
+
+  public static final int[] DIRECTIONS = {-8, 8, 1, -1, -7, 7, -9, 9};
+
+  private Constants() {
         // restrict instantiation
     }
 

@@ -3,7 +3,7 @@ package com.mcgreedy.optionothello.ui;
 import static javafx.application.Platform.exit;
 
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
-import com.mcgreedy.optionothello.gamemanagement.Player;
+import com.mcgreedy.optionothello.ai.Player;
 import com.mcgreedy.optionothello.utils.SaveGameUtils;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
@@ -26,7 +26,6 @@ public class MainGUI extends Application {
 
 
   static GameUI gameUI;
-  static OptionsUI optionsUI;
   static AnalyseUi analyseUI;
 
   //GameManager
@@ -53,8 +52,7 @@ public class MainGUI extends Application {
     //create gameUI
     gameUI = new GameUI(gameManager);
 
-    //create OptionUI
-    optionsUI = new OptionsUI();
+
 
     //create AnalyseUI
     analyseUI = new AnalyseUi();
@@ -67,8 +65,6 @@ public class MainGUI extends Application {
     // set tabs
     Tab gameTab = new Tab("Game", gameUI.getGamePane());
     tabPane.getTabs().add(gameTab);
-    Tab optionsTab = new Tab("Options", optionsUI.getOptionsPane());
-    tabPane.getTabs().add(optionsTab);
     Tab analyseTab = new Tab("Analyse", analyseUI.getAnalysePane());
     tabPane.getTabs().add(analyseTab);
     selectionModel = tabPane.getSelectionModel();
@@ -77,10 +73,6 @@ public class MainGUI extends Application {
       if (newTab == gameTab) {
         LOGGER.info("Opening game tab");
         SaveGameUtils.loadSaveOptions();
-      } else if (newTab == optionsTab) {
-        LOGGER.info("Opening options tab");
-        SaveGameUtils.loadSaveOptions();
-        optionsUI.updateOptionListView();
       } else if (newTab == analyseTab) {
         LOGGER.info("Opening analyse tab");
         SaveGameUtils.loadSaveGames();

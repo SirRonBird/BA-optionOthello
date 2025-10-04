@@ -4,7 +4,6 @@ import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.engine.MoveStatistics;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
-import com.mcgreedy.optionothello.gamemanagement.Player;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import java.io.File;
@@ -21,7 +20,6 @@ public class MCTSPlayer extends Player {
     private final MCTSSettings settings;
     private final Random rand = new Random();
     private static final Logger LOGGER = LogManager.getLogger(MCTSPlayer.class);
-    private int nodeCount = 0;
 
     //MAST
     private Map<Move, Integer> mastVisits = new HashMap<>();
@@ -36,7 +34,6 @@ public class MCTSPlayer extends Player {
     @Override
     public Move getMove(Board board) {
         Node root = new Node(null, null, board, color, 0);
-        nodeCount = 0;
         long duration = 1000 + 1000 * searchTimeLimit;
         long startTime = System.currentTimeMillis();
 
@@ -64,7 +61,6 @@ public class MCTSPlayer extends Player {
                 Move moveWithDepth = new Move(move.getColor(), move.getPosition(), node.depth + 1, move.getPlayerType());
                 Node child = new Node(node, moveWithDepth, boardClone.clone(), toggleColor(node.player), node.depth + 1);
                 node.children.add(child);
-                nodeCount++;
                 node = child;
                 rolloutMoves.add(moveWithDepth);
             }
@@ -141,18 +137,11 @@ public class MCTSPlayer extends Player {
         long searchTime = System.currentTimeMillis() - startTime;
         MoveStatistics stats = new MoveStatistics(findMaxDepth(root), null, countNodes(root), searchTime);
         move.setStatistics(stats);
-
-        /*try {
-            exportTreeToDot(root);}
-        catch (IOException e) {
-            LOGGER.error("Failed to save tree as Dot: {}", e.getMessage());
-        }*/
-
         return move;
     }
 
     private Move selectMoveWithMAST(List<Move> moves) {
-        double tau = 10; // Temperatur
+        double tau = settings.tau(); // Temperatur
         double sum = 0.0;
         double[] scores = new double[moves.size()];
 
@@ -254,14 +243,14 @@ public class MCTSPlayer extends Player {
             double qValue = child.wins / (child.visits + 1e-6);
 
             double exploration = settings.explorationConstant() *
-                Math.sqrt(2 * Math.log(this.visits + 1) / (child.visits + 1e-6));
+                Math.sqrt(2 * Math.log((double) this.visits + 1) / (child.visits + 1e-6));
 
             if (settings.useRave() && child.move != null) {
                 int raveN = this.raveVisits.getOrDefault(child.move, 0);
                 double raveW = this.raveValues.getOrDefault(child.move, 0.0);
                 double amaf = (raveN > 0) ? raveW / raveN : 0.0;
 
-                double k = 1000;
+                double k = settings.k();
                 double beta = Math.sqrt(k / (3.0 * this.visits + k));
 
                 double mixedValue = (1 - beta) * qValue + beta * amaf;

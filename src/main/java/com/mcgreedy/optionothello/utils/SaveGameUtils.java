@@ -2,16 +2,15 @@ package com.mcgreedy.optionothello.utils;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mcgreedy.optionothello.ai.Option_js;
 import com.mcgreedy.optionothello.dtos.OptionDTO;
 import com.mcgreedy.optionothello.dtos.OptionDTO.BoardMaskDTO;
 import com.mcgreedy.optionothello.dtos.SaveGameDTO;
 import com.mcgreedy.optionothello.dtos.SaveGameDTO.MoveStatistics;
 import com.mcgreedy.optionothello.dtos.SaveTournamentDTO;
 import com.mcgreedy.optionothello.engine.Board;
-import com.mcgreedy.optionothello.engine.Game;
+import com.mcgreedy.optionothello.gamemanagement.Game;
 import com.mcgreedy.optionothello.engine.Move;
-import com.mcgreedy.optionothello.gamemanagement.Player;
+import com.mcgreedy.optionothello.ai.Player;
 import com.mcgreedy.optionothello.gamemanagement.Tournament;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
@@ -80,16 +79,17 @@ public class SaveGameUtils {
 
         gameDetails.setBlackPlayer(blackPlayerDetails);
         gameDetails.setWhitePlayer(whitePlayerDetails);
-        gameDetails.setStartBoardBlack(currentGame.board.startBlack);
-        gameDetails.setStartBoardWhite(currentGame.board.startWhite);
+        gameDetails.setStartBoardBlack(Board.BLACK_START_BOARD);
+        gameDetails.setStartBoardWhite(Board.WHITE_START_BOARD);
 
         List<SaveGameDTO.MoveDetails> moveDetailsList = new ArrayList<>();
-        if (currentGame.moveHistory.size() != currentGame.boardHistory.size()) {
-            LOGGER.error("MoveHistory and BoardHistory have different sizes: {},{}", currentGame.moveHistory.size(), currentGame.boardHistory.size());
+        if (currentGame.getMoveHistory().size() != currentGame.getBoardHistory().size()) {
+            LOGGER.error("MoveHistory and BoardHistory have different sizes: {},{}",
+                currentGame.getMoveHistory().size(), currentGame.getBoardHistory().size());
         } else {
-            for (int i = 0; i < currentGame.moveHistory.size(); i++) {
-                Move move = currentGame.moveHistory.get(i);
-                Board board = currentGame.boardHistory.get(i);
+            for (int i = 0; i < currentGame.getMoveHistory().size(); i++) {
+                Move move = currentGame.getMoveHistory().get(i);
+                Board board = currentGame.getBoardHistory().get(i);
                 SaveGameDTO.MoveDetails moveDetails = new SaveGameDTO.MoveDetails();
 
                 moveDetails.setColor(move.getColor());
@@ -283,13 +283,13 @@ public class SaveGameUtils {
             currentGameDetails.setWinner(game.getWinner());
             currentGameDetails.setGameNumber(gameIndex.getAndIncrement());
 
-            currentGameDetails.setStartBoardBlack(game.board.startBlack);
-            currentGameDetails.setStartBoardWhite(game.board.startWhite);
+            currentGameDetails.setStartBoardBlack(Board.BLACK_START_BOARD);
+            currentGameDetails.setStartBoardWhite(Board.WHITE_START_BOARD);
 
             List<SaveTournamentDTO.MoveDetails> moveDetailsList = new ArrayList<>();
-            for (int i = 0; i < game.moveHistory.size(); i++) {
-                Move move = game.moveHistory.get(i);
-                Board board = game.boardHistory.get(i);
+            for (int i = 0; i < game.getMoveHistory().size(); i++) {
+                Move move = game.getMoveHistory().get(i);
+                Board board = game.getBoardHistory().get(i);
                 SaveTournamentDTO.MoveDetails moveDetails = new SaveTournamentDTO.MoveDetails();
 
                 moveDetails.setColor(move.getColor());
@@ -338,7 +338,7 @@ public class SaveGameUtils {
         List<BoardMaskDTO> boardMaskDTOs = new ArrayList<>();
         for (Board board : boards) {
             BoardMaskDTO boardMaskDTO = new BoardMaskDTO(
-                board.mask,board.name
+                board.getMask(),board.getName()
             );
             boardMaskDTOs.add(boardMaskDTO);
         }
@@ -349,7 +349,7 @@ public class SaveGameUtils {
         List<Board> boards = new ArrayList<>();
         for(BoardMaskDTO mask : dto){
             Board board = new Board(mask.name, true);
-            board.mask = mask.mask;
+            board.setMask(mask.mask);
             boards.add(board);
         }
         return boards;

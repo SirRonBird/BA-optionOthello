@@ -101,7 +101,7 @@ public class TournamentAnalysisUI {
     gameSelection.setPrefWidth(GAME_SELECTOR_WIDTH);
     gameSelection.getItems().addAll(saveTournamentDTO.getTournament().getGames());
 
-    gameSelection.setCellFactory(_ -> new ListCell<>() {
+    gameSelection.setCellFactory(a -> new ListCell<>() {
       @Override
       protected void updateItem(SaveTournamentDTO.GameDetails item, boolean empty) {
         super.updateItem(item, empty);
@@ -131,7 +131,7 @@ public class TournamentAnalysisUI {
       }
     });
 
-    gameSelection.valueProperty().addListener((_, _, newGame) -> {
+    gameSelection.valueProperty().addListener((a, b, newGame) -> {
       if(newGame != null){
         //update gameAnalysisBox
         updateGameVisualizerContainer(newGame);
@@ -206,7 +206,7 @@ public class TournamentAnalysisUI {
 
     // back-Button (◀)
     Button backButton = new Button("◀");
-    backButton.setOnAction(_ -> {
+    backButton.setOnAction(a -> {
       double current = moveSlider.getValue();
       if (current > moveSlider.getMin()) {
         moveSlider.setValue(current - 1);
@@ -215,7 +215,7 @@ public class TournamentAnalysisUI {
 
     // front-Button (▶)
     Button forwardButton = new Button("▶");
-    forwardButton.setOnAction(_ -> {
+    forwardButton.setOnAction(a -> {
       double current = moveSlider.getValue();
       if (current < moveSlider.getMax()) {
         moveSlider.setValue(current + 1);
@@ -236,7 +236,7 @@ public class TournamentAnalysisUI {
     slider.setSnapToTicks(true);
     HBox.setHgrow(slider, Priority.ALWAYS);
     slider.setMaxWidth(Double.MAX_VALUE);
-    slider.valueProperty().addListener((_, _, newVal) -> {
+    slider.valueProperty().addListener((a, b, newVal) -> {
       if(newVal.intValue() == SLIDER_START_VALUE){
         GUIUtils.updateBoardGrid(
             game.getStartBoardBlack(),

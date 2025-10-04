@@ -17,35 +17,25 @@ import com.mcgreedy.optionothello.ai.options.BottomLeftStableCornerOption;
 import com.mcgreedy.optionothello.ai.options.BottomRightCornerXOption;
 import com.mcgreedy.optionothello.ai.options.BottomRightStableCornerOption;
 import com.mcgreedy.optionothello.ai.options.CenterControlOption;
-import com.mcgreedy.optionothello.ai.options.CornerOption;
-import com.mcgreedy.optionothello.ai.options.DiagonalControlOption;
-import com.mcgreedy.optionothello.ai.options.FrontierControlOption;
-import com.mcgreedy.optionothello.ai.options.HeatmapOption;
 import com.mcgreedy.optionothello.ai.options.MainDiagControlOption;
 import com.mcgreedy.optionothello.ai.options.MaxFlipsOption;
 import com.mcgreedy.optionothello.ai.options.MaximizeMobilityOption;
 import com.mcgreedy.optionothello.ai.options.MinimizeEnemyMobilityOption;
-import com.mcgreedy.optionothello.ai.options.MobilityOption;
-import com.mcgreedy.optionothello.ai.options.ParityOption;
-import com.mcgreedy.optionothello.ai.options.PotentialMobilityOption;
 import com.mcgreedy.optionothello.ai.options.PreventOpponentCornerOption;
 import com.mcgreedy.optionothello.ai.options.QuietMoveOption;
-import com.mcgreedy.optionothello.ai.options.StableDiscsOption;
 import com.mcgreedy.optionothello.ai.options.TopLeftCornerXOption;
 import com.mcgreedy.optionothello.ai.options.TopLeftStableCornerOption;
 import com.mcgreedy.optionothello.ai.options.TopRightCornerXOption;
 import com.mcgreedy.optionothello.ai.options.TopRightStableCornerOption;
 import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
-import com.mcgreedy.optionothello.gamemanagement.HumanPlayer;
-import com.mcgreedy.optionothello.gamemanagement.Player;
+import com.mcgreedy.optionothello.ai.HumanPlayer;
+import com.mcgreedy.optionothello.ai.Player;
 import com.mcgreedy.optionothello.utils.Constants;
 import com.mcgreedy.optionothello.utils.GUIUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -69,7 +59,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
@@ -96,7 +85,7 @@ public class GameUI {
 
   //Gamemanager
   Gamemanager gameManager;
-  int tournamentNumberOfGames = 250;
+  int tournamentNumberOfGames = 50;
   int lastClickedCell;
   Player playerToMove;
   List<Integer> validMoveCells = new ArrayList<>();
@@ -135,6 +124,11 @@ public class GameUI {
   CheckBox blackMctsRAVEEnabledCheckBox;
   CheckBox blackMctsMASTEnabledCheckBox;
 
+  TextField mctsWhiteTauParameter;
+  TextField mctsBlackTauParameter;
+  TextField mctsWhiteKParameter;
+  TextField mctsBlackKParameter;
+
   // OMCTS Parameters
   TextField whiteOmctsExplorationParameter;
   TextField blackOmctsExplorationParameter;
@@ -148,6 +142,13 @@ public class GameUI {
   boolean isWhiteOmctsRaveEnabled = false;
   boolean isBlackOmctsMastEnabled = false;
   boolean isWhiteOmctsMastEnabled = false;
+
+  TextField omctsWhiteTauParameter;
+  TextField omctsBlackTauParameter;
+  TextField omctsWhiteKParameter;
+  TextField omctsBlackKParameter;
+
+
   List<Option> options = List.of(
       new TopLeftCornerXOption(),
       new TopRightCornerXOption(),
@@ -434,16 +435,31 @@ public class GameUI {
           //UCT Improvements
           whiteMctsMASTEnabledCheckBox = new CheckBox("MAST");
           whiteMctsMASTEnabledCheckBox.setSelected(false);
+
+          mctsWhiteTauParameter = new TextField("10");
+          mctsWhiteTauParameter.setEditable(false);
+          mctsWhiteTauParameter.setPromptText("Tau Parameter for MAST");
+
           whiteMctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isWhiteMctsMastEnabled = newVal;
+            mctsWhiteTauParameter.setEditable(Boolean.TRUE.equals(newVal));
           });
           whiteMctsRAVEEnabledCheckBox = new CheckBox("RAVE");
           whiteMctsRAVEEnabledCheckBox.setSelected(false);
+          mctsWhiteKParameter = new TextField("1000");
+          mctsWhiteKParameter.setEditable(false);
+          mctsWhiteKParameter.setPromptText("K Parameter for RAVE");
           whiteMctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isWhiteMctsRaveEnabled = newVal;
+            mctsWhiteKParameter.setEditable(Boolean.TRUE.equals(newVal));
           });
+
+
           mctsImprovementsBox.getChildren().addAll(whiteMctsMASTEnabledCheckBox,
-              whiteMctsRAVEEnabledCheckBox);
+              mctsWhiteTauParameter,
+              whiteMctsRAVEEnabledCheckBox,
+              mctsWhiteKParameter
+          );
         } else {
           //Exploration Parameter
           blackMctsExplorationParameter = new TextField("1.41");
@@ -453,16 +469,30 @@ public class GameUI {
           //UCT Improvements
           blackMctsMASTEnabledCheckBox = new CheckBox("MAST");
           blackMctsMASTEnabledCheckBox.setSelected(false);
+
+          mctsBlackTauParameter = new TextField("10");
+          mctsBlackTauParameter.setEditable(false);
+          mctsBlackTauParameter.setPromptText("Tau Parameter for MAST");
+
           blackMctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isBlackMctsMastEnabled = newVal;
+            mctsBlackTauParameter.setEditable(Boolean.TRUE.equals(newVal));
           });
           blackMctsRAVEEnabledCheckBox = new CheckBox("RAVE");
           blackMctsRAVEEnabledCheckBox.setSelected(false);
+
+          mctsBlackKParameter = new TextField("1000");
+          mctsBlackKParameter.setEditable(false);
+          mctsBlackKParameter.setPromptText("K Parameter for RAVE");
+
           blackMctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isBlackMctsRaveEnabled = newVal;
+            mctsBlackKParameter.setEditable(Boolean.TRUE.equals(newVal));
           });
           mctsImprovementsBox.getChildren().addAll(blackMctsMASTEnabledCheckBox,
-              blackMctsRAVEEnabledCheckBox);
+              mctsBlackTauParameter,
+              blackMctsRAVEEnabledCheckBox,
+              mctsBlackKParameter);
         }
 
 
@@ -509,12 +539,29 @@ public class GameUI {
           whiteOmctsMASTEnabledCheckBox.setSelected(false);
           whiteOmctsRAVEEnabledCheckBox = new CheckBox("RAVE Enabled");
           whiteOmctsRAVEEnabledCheckBox.setSelected(false);
-          whiteOmctsMASTEnabledCheckBox.selectedProperty().addListener((_, _, newVal) ->
-              isWhiteOmctsMastEnabled = newVal);
-          whiteOmctsRAVEEnabledCheckBox.selectedProperty().addListener((_, _, newVal)
-              -> isWhiteOmctsRaveEnabled = newVal);
+
+          omctsWhiteTauParameter = new TextField("1.0");
+          omctsWhiteTauParameter.setEditable(false);
+          omctsWhiteTauParameter.setPromptText("Tau Parameter for MAST");
+
+          omctsWhiteKParameter = new TextField("1000");
+          omctsWhiteKParameter.setEditable(false);
+          omctsWhiteKParameter.setPromptText("K Parameter for RAVE");
+
+          whiteOmctsMASTEnabledCheckBox.selectedProperty().addListener((a, b, newVal) -> {
+            isWhiteOmctsMastEnabled = newVal;
+            omctsWhiteTauParameter.setEditable(Boolean.TRUE.equals(newVal));
+          });
+          whiteOmctsRAVEEnabledCheckBox.selectedProperty().addListener((a, b, newVal)
+              -> {
+            isWhiteOmctsRaveEnabled = newVal;
+            omctsWhiteKParameter.setEditable(Boolean.TRUE.equals(newVal));
+          });
           improvementsBox.getChildren().addAll(whiteOmctsMASTEnabledCheckBox,
-              whiteOmctsRAVEEnabledCheckBox);
+              omctsWhiteTauParameter,
+              whiteOmctsRAVEEnabledCheckBox,
+              omctsWhiteKParameter
+          );
           //Option list
           whiteOptionsList = createOptionsList();
           optionBox.getChildren().addAll(whiteOptionsList);
@@ -535,14 +582,28 @@ public class GameUI {
           blackOmctsMASTEnabledCheckBox.setSelected(false);
           blackOmctsRAVEEnabledCheckBox = new CheckBox("RAVE Enabled");
           blackOmctsRAVEEnabledCheckBox.setSelected(false);
+
+          omctsBlackTauParameter = new TextField("1.0");
+          omctsBlackTauParameter.setEditable(false);
+          omctsBlackTauParameter.setPromptText("Tau Parameter for MAST");
+
+          omctsBlackKParameter = new TextField("1000");
+          omctsBlackKParameter.setEditable(false);
+          omctsBlackKParameter.setPromptText("K Parameter for RAVE");
+
           blackOmctsMASTEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isBlackOmctsMastEnabled = newVal;
+            omctsBlackTauParameter.setEditable(Boolean.TRUE.equals(newVal));
           });
           blackOmctsRAVEEnabledCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             isBlackOmctsRaveEnabled = newVal;
+            omctsBlackKParameter.setEditable(Boolean.TRUE.equals(newVal));
           });
           improvementsBox.getChildren().addAll(blackOmctsMASTEnabledCheckBox,
-              blackOmctsRAVEEnabledCheckBox);
+              omctsBlackTauParameter,
+              blackOmctsRAVEEnabledCheckBox,
+              omctsBlackKParameter
+              );
           //Option list
           blackOptionsList = createOptionsList();
           optionBox.getChildren().addAll(blackOptionsList);
@@ -834,7 +895,7 @@ public class GameUI {
 
     // Anzahl Spiele
     Label numberOfGamesLabel = new Label("Number of Games:");
-    Spinner<Integer> numberOfGamesSpinner = new Spinner<>(1, 5000, 250, 10);
+    Spinner<Integer> numberOfGamesSpinner = new Spinner<>(1, 5000, 50, 10);
     numberOfGamesSpinner.setEditable(true);
     numberOfGamesSpinner.valueProperty().addListener((obs, oldValue, newValue) ->
         tournamentNumberOfGames = newValue.intValue()
@@ -856,7 +917,7 @@ public class GameUI {
     limitationParameterBox.setMaxWidth(Double.MAX_VALUE);
 
     // --- Spinner für Simulation Limit ---
-    Spinner<Integer> simulationSpinner = new Spinner<>(100, 5000, 500);
+    Spinner<Integer> simulationSpinner = new Spinner<>(100, 5000, 1000);
     simulationSpinner.setEditable(true);
     Label simulationLabel = new Label("Simulationen pro Zug");
     simulationLabel.setMaxWidth(Double.MAX_VALUE);
@@ -931,7 +992,7 @@ public class GameUI {
           whitePlayer.setSearchTimeLimit(-1);
         } else if (timeLimitToggle.isSelected()) {
           long timePerMove = searchTime[0];
-          LOGGER.info("Search time: {}s", timePerMove);
+          LOGGER.info("Search time: {}s", timePerMove); 
           blackPlayer.setSearchTimeLimit(timePerMove);
           whitePlayer.setSearchTimeLimit(timePerMove);
           blackPlayer.setSimulationLimit(-1);
@@ -960,7 +1021,9 @@ public class GameUI {
         MCTSSettings mctsSettings = new MCTSSettings(
             Double.parseDouble(blackMctsExplorationParameter.getText()),
             isBlackMctsMastEnabled,
-            isBlackMctsRaveEnabled
+            isBlackMctsRaveEnabled,
+            Double.parseDouble(mctsBlackTauParameter.getText()),
+            Double.parseDouble(mctsBlackKParameter.getText())
         );
         return new MCTSPlayer(
             PLAYER_COLOR.BLACK,
@@ -984,8 +1047,9 @@ public class GameUI {
             Double.parseDouble(blackOmctsExplorationParameter.getText()),
             selectedOptions,
             isBlackOmctsMastEnabled,
-            isBlackOmctsRaveEnabled
-
+            isBlackOmctsRaveEnabled,
+            Double.parseDouble(omctsBlackTauParameter.getText()),
+            Double.parseDouble(omctsBlackKParameter.getText())
         );
 
         return new OMCTSPlayer(
@@ -1015,7 +1079,9 @@ public class GameUI {
         MCTSSettings mctsSettings = new MCTSSettings(
             Double.parseDouble(whiteMctsExplorationParameter.getText()),
             isWhiteMctsMastEnabled,
-            isWhiteMctsRaveEnabled
+            isWhiteMctsRaveEnabled,
+            Double.parseDouble(mctsWhiteTauParameter.getText()),
+            Double.parseDouble(mctsWhiteKParameter.getText())
         );
         return new MCTSPlayer(
             PLAYER_COLOR.WHITE,
@@ -1039,7 +1105,9 @@ public class GameUI {
             Double.parseDouble(whiteOmctsExplorationParameter.getText()),
             selectedOptions,
             isWhiteOmctsMastEnabled,
-            isWhiteOmctsRaveEnabled
+            isWhiteOmctsRaveEnabled,
+            Double.parseDouble(omctsWhiteTauParameter.getText()),
+            Double.parseDouble(omctsWhiteKParameter.getText())
         );
         return new OMCTSPlayer(
             PLAYER_COLOR.WHITE,

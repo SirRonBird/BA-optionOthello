@@ -8,6 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to get the top right corner, if the X field is captured by the enemy.
+ * Option selects move which either directly captures the corner or creates a disk
+ * on the diagonal to capture the corner in the next move.
+ * Option is finished if the top right corner is captured
+ */
+
 public class TopRightCornerXOption implements Option {
 
   private static final String NAME = "TopRightCornerX";

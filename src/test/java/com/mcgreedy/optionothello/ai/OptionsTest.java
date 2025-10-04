@@ -9,44 +9,27 @@ import com.mcgreedy.optionothello.ai.options.AntiDiagControlOption;
 import com.mcgreedy.optionothello.ai.options.BottomLeftCornerXOption;
 import com.mcgreedy.optionothello.ai.options.BottomRightCornerXOption;
 import com.mcgreedy.optionothello.ai.options.CenterControlOption;
-import com.mcgreedy.optionothello.ai.options.CornerOption;
 import com.mcgreedy.optionothello.ai.options.DiagonalControlOption;
-import com.mcgreedy.optionothello.ai.options.FrontierControlOption;
-import com.mcgreedy.optionothello.ai.options.HeatmapOption;
 import com.mcgreedy.optionothello.ai.options.MainDiagControlOption;
 import com.mcgreedy.optionothello.ai.options.MaxFlipsOption;
 import com.mcgreedy.optionothello.ai.options.MinimizeEnemyMobilityOption;
-import com.mcgreedy.optionothello.ai.options.MobilityOption;
-import com.mcgreedy.optionothello.ai.options.ParityOption;
-import com.mcgreedy.optionothello.ai.options.PotentialMobilityOption;
 import com.mcgreedy.optionothello.ai.options.PreventOpponentCornerOption;
 import com.mcgreedy.optionothello.ai.options.QuietMoveOption;
-import com.mcgreedy.optionothello.ai.options.StableDiscsOption;
 import com.mcgreedy.optionothello.ai.options.TopLeftCornerXOption;
 import com.mcgreedy.optionothello.ai.options.TopRightCornerXOption;
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
-import com.oracle.truffle.api.dsl.SpecializationStatistics.AlwaysEnabled;
-import com.oracle.truffle.js.nodes.access.LocalVarIncNode.Op;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class OptionsTest {
 
-  Option cornerOption = new CornerOption();
   Option centerControlOption = new CenterControlOption();
   Option diagonalControlOption = new DiagonalControlOption();
-  Option frontierControlOption = new FrontierControlOption();
-  Option heatMapOption = new HeatmapOption();
   Option maxFlipsOption = new MaxFlipsOption();
-  Option mobilityOption = new MobilityOption();
-  Option parityOption = new ParityOption();
-  Option potentialMobilityOption = new PotentialMobilityOption();
   Option preventOpponentCornerOption = new PreventOpponentCornerOption();
-  Option stableDiscsOption = new StableDiscsOption();
 
 
 
@@ -59,30 +42,16 @@ class OptionsTest {
 
     List<Move> moves = board.generateMovesAsList(true,-1, PLAYER_TYPE.O_MCTS);
 
-    Move cornerOptionMove = cornerOption.getBestMove(board,moves);
     Move centerControlOptionMove = centerControlOption.getBestMove(board,moves);
     Move diagonalControlOptionMove = diagonalControlOption.getBestMove(board,moves);
-    Move frontierControlOptionMove = frontierControlOption.getBestMove(board,moves);
-    Move heatMapOptionMove = heatMapOption.getBestMove(board,moves);
     Move maxFlipsOptionMove = maxFlipsOption.getBestMove(board,moves);
-    Move mobilityOptionMove = mobilityOption.getBestMove(board,moves);
-    Move parityOptionMove = parityOption.getBestMove(board,moves);
-    Move potentialMobilityOptionMove = potentialMobilityOption.getBestMove(board,moves);
     Move preventOpponentCornerOptionMove = preventOpponentCornerOption.getBestMove(board,moves);
-    Move stabelDiscsOptionMove = stableDiscsOption.getBestMove(board,moves);
 
     List<Move> optionsMoves = List.of(
-        cornerOptionMove,
         centerControlOptionMove,
         diagonalControlOptionMove,
-        frontierControlOptionMove,
-        heatMapOptionMove,
         maxFlipsOptionMove,
-        mobilityOptionMove,
-        parityOptionMove,
-        potentialMobilityOptionMove,
-        preventOpponentCornerOptionMove,
-        stabelDiscsOptionMove
+        preventOpponentCornerOptionMove
     );
 
 
@@ -292,50 +261,6 @@ class OptionsTest {
     assertTrue(possibleMoves.contains(calculatedMove2));
   }
 
-  @Test
-  void stableDiscOptionTest(){
-    Option stableDiscsOption = new StableDiscsOption();
-
-    Board board = new Board(
-        -9223319156814249984L,
-        4629771060558954496L
-    );
-
-    assertTrue(stableDiscsOption.isBoardInInitiationSet(board,PLAYER_COLOR.BLACK));
-
-    List<Move> moves = board.generateMovesAsList(false,-1, PLAYER_TYPE.O_MCTS);
-
-    Move calculatedMove = stableDiscsOption.getBestMove(board,moves);
-    System.out.println(calculatedMove);
-
-    assertEquals(61, calculatedMove.getPosition());
-
-
-    Board newBoard = new Board(
-        -256581550943485888L,
-        153968149790848L
-    );
-
-    List<Move> newMoves = newBoard.generateMovesAsList(true,-1, PLAYER_TYPE.O_MCTS);
-
-    Move calculatedMove2 = stableDiscsOption.getBestMove(newBoard,newMoves);
-    System.out.println(calculatedMove2);
-
-    assertEquals(5, calculatedMove2.getPosition());
-
-    Board newBoard2 = new Board(
-        -256581894001913856L,
-        154861500907744L
-    );
-
-    List<Move> newMoves2 = newBoard2.generateMovesAsList(true,-1, PLAYER_TYPE.O_MCTS);
-
-    Move calculatedMove3 = stableDiscsOption.getBestMove(newBoard2,newMoves2);
-    System.out.println(calculatedMove3);
-
-    assertEquals(4, calculatedMove3.getPosition());
-
-  }
 
   @Test
   void quietMoveOptionTest(){

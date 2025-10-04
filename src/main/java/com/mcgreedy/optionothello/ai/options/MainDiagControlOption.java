@@ -8,6 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to control the main diagonal. Selectable if the player don't have any
+ * disk on the diagonal. Then selects a move which creates a disk on the diagonal.
+ * Option does not play on the X-fields.
+ * Option is finished if at least one disk is on the diag.
+ */
+
 public class MainDiagControlOption implements Option {
 
   private static final String NAME = "MainDiagControl";

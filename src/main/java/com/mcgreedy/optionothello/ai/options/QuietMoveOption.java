@@ -8,11 +8,15 @@ import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to select the quietest move
+ */
+
 public class QuietMoveOption implements Option {
 
   private static final String NAME = "QuietMoveOption";
 
-  private static final int[] DIRECTIONS = Board.DIRECTIONS;
+  private static final int[] DIRECTIONS = Constants.DIRECTIONS;
   private static final Random rand  = new Random();
 
   @Override
@@ -27,14 +31,11 @@ public class QuietMoveOption implements Option {
 
   @Override
   public boolean shouldTerminate(Board board, PLAYER_COLOR playerColor) {
-    //No moves left
     return true;
-    //return board.generateAllPossibleMoves(playerColor == PLAYER_COLOR.WHITE) == 0L || board.isGameOver();
   }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    LOGGER.info(NAME);
     PLAYER_COLOR me = possibleMoves.getFirst().getColor();
     Move best = null;
     double bestScore = Double.POSITIVE_INFINITY;
@@ -76,7 +77,7 @@ public class QuietMoveOption implements Option {
         continue;
       }
       // Prüfe alle Nachbarrichtungen auf leere Felder
-      for (int direction : Board.DIRECTIONS) {
+      for (int direction : DIRECTIONS) {
         int neighborPosition = position + direction;
         if (neighborPosition < 0 || neighborPosition >= 64) {
           continue;
@@ -92,10 +93,6 @@ public class QuietMoveOption implements Option {
     return frontierStoneCount;
   }
 
-  /**
-   * Zählt die maximale Länge einer Frontier-„Wand“ in Reihen und Spalten.
-   * Eine Frontier-Stein ist ein eigener Stein mit mindestens einem leeren Nachbarn.
-   */
   public int countMaxFrontierWall(Board board, PLAYER_COLOR playerColor) {
     long playerPieces = playerColor == PLAYER_COLOR.WHITE
         ? board.getWhite()
@@ -108,7 +105,7 @@ public class QuietMoveOption implements Option {
       int currentLength = 0;
       for (int col = 0; col < 8; col++) {
         int pos = row * 8 + col;
-        if (isFrontierStone(board, playerPieces, emptySquares, pos)) {
+        if (isFrontierStone(playerPieces, emptySquares, pos)) {
           currentLength++;
           maxWallLength = Math.max(maxWallLength, currentLength);
         } else {
@@ -122,7 +119,7 @@ public class QuietMoveOption implements Option {
       int currentLength = 0;
       for (int row = 0; row < 8; row++) {
         int pos = row * 8 + col;
-        if (isFrontierStone(board, playerPieces, emptySquares, pos)) {
+        if (isFrontierStone(playerPieces, emptySquares, pos)) {
           currentLength++;
           maxWallLength = Math.max(maxWallLength, currentLength);
         } else {
@@ -134,14 +131,13 @@ public class QuietMoveOption implements Option {
     return maxWallLength;
   }
 
-  /** Prüft, ob an Position pos ein Frontier-Stein liegt. */
-  private boolean isFrontierStone(Board board, long playerPieces, long emptySquares, int pos) {
+  private boolean isFrontierStone( long playerPieces, long emptySquares, int pos) {
     long bit = 1L << pos;
     if ((playerPieces & bit) == 0) {
       return false;
     }
     // Ein Frontier-Stein hat mindestens einen leeren Nachbarn
-    for (int dir : Board.DIRECTIONS) {
+    for (int dir : DIRECTIONS) {
       int neighbor = pos + dir;
       if (neighbor < 0 || neighbor >= 64) continue;
       if ((emptySquares & (1L << neighbor)) != 0) {

@@ -4,18 +4,12 @@ import com.mcgreedy.optionothello.ai.Option;
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.utils.Constants;
-import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
 /**
- * MaxFlipsOption
- * --------------------------------------------------------------------
- * Ziel: Anzahl gedrehter Steine maximieren NUR im Endgame (>=50 Steine).
- * Early/Midgame werden viele Flips vermieden (minimiert), um Frontier
- * klein zu halten.
+ * Option to select the move which flips the most enemy disks
  */
 public class MaxFlipsOption implements Option {
 
@@ -25,7 +19,7 @@ public class MaxFlipsOption implements Option {
 
   @Override public boolean isBoardInInitiationSet(Board b, Constants.PLAYER_COLOR c) { return true; }
   @Override public List<Board> initiationSet() { return Collections.emptyList(); }
-  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return !b.isGameOver(); }
+  @Override public boolean shouldTerminate(Board b, Constants.PLAYER_COLOR c) { return true; }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {

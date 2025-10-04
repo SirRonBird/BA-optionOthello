@@ -1,7 +1,8 @@
-package com.mcgreedy.optionothello.gamemanagement;
+package com.mcgreedy.optionothello.ai;
 
 import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
+import com.mcgreedy.optionothello.gamemanagement.Gamemanager;
 import com.mcgreedy.optionothello.utils.Constants;
 
 public abstract class Player {

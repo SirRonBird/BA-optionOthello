@@ -1,14 +1,11 @@
 package com.mcgreedy.optionothello.gamemanagement;
 
-import com.mcgreedy.optionothello.engine.Game;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class Tournament {
 
-    Player blackPlayer;
-    Player whitePlayer;
+    Gamemanager gamemanager;
     int numberOfGames;
     List<Game> games;
 
@@ -19,12 +16,10 @@ public class Tournament {
 
     int gamesPlayed = 0;
 
-    public Tournament(Player blackPlayer, Player whitePlayer, int numberOfGames) {
-        this.blackPlayer = blackPlayer;
-        this.whitePlayer = whitePlayer;
-
+    public Tournament(Gamemanager gamemanager,int numberOfGames) {
         games = new ArrayList<>();
         this.gamesLeft = this.numberOfGames = numberOfGames;
+        this.gamemanager = gamemanager;
     }
 
     public void addGame(Game game) {
@@ -73,8 +68,8 @@ public class Tournament {
     @Override
     public String toString() {
         return "Tournament{" +
-                "blackPlayer=" + blackPlayer +
-                ", whitePlayer=" + whitePlayer +
+                "blackPlayer=" + gamemanager.blackPlayer +
+                ", whitePlayer=" + gamemanager.whitePlayer +
                 ", numberOfGames=" + numberOfGames +
                 ", games=" + games +
                 ", gamesLeft=" + gamesLeft +

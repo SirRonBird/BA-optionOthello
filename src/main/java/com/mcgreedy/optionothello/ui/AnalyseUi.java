@@ -136,7 +136,7 @@ public class AnalyseUi {
     typePane.setTabDragPolicy(TabPane.TabDragPolicy.FIXED);
     typePane.setStyle(
         "-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-width: 1;");
-    typePane.widthProperty().addListener((_, _, newVal) -> {
+    typePane.widthProperty().addListener((a, b, newVal) -> {
       double halfWidth = (newVal.doubleValue() / 2) - 22;
       typePane.setTabMinWidth(halfWidth);
       typePane.setTabMaxWidth(halfWidth);
@@ -148,7 +148,7 @@ public class AnalyseUi {
     Tab tournamentTab = createTournamentSelectionTab();
     typePane.getTabs().add(tournamentTab);
 
-    typePane.getSelectionModel().selectedItemProperty().addListener((_, _, newTab) -> {
+    typePane.getSelectionModel().selectedItemProperty().addListener((a, b, newTab) -> {
       if (newTab == gamesTab) {
         updateGamesListView();
       } else if (newTab == tournamentTab) {
@@ -168,7 +168,7 @@ public class AnalyseUi {
 
     gamesListView = new ListView<>();
     gamesListView.setPrefHeight(700);
-    gamesListView.setCellFactory(_ -> new ListCell<>() {
+    gamesListView.setCellFactory(a -> new ListCell<>() {
       @Override
       protected void updateItem(SaveGameDTO item, boolean empty) {
         super.updateItem(item, empty);
@@ -186,7 +186,7 @@ public class AnalyseUi {
     });
     updateGamesListView();
     gamesListView.getSelectionModel().selectedItemProperty()
-        .addListener((_, _, newGame) -> {
+        .addListener((a,b, newGame) -> {
           if (newGame != null) {
             GameAnalysisUI.showGameAnalysis(newGame);
             GameStatisticsUI.showGameStatistics(newGame);
@@ -206,7 +206,7 @@ public class AnalyseUi {
 
     tournamentsListView = new ListView<>();
     tournamentsListView.setPrefHeight(700);
-    tournamentsListView.setCellFactory(_ -> new ListCell<>() {
+    tournamentsListView.setCellFactory(a -> new ListCell<>() {
 
       @Override
       protected void updateItem(SaveTournamentDTO item, boolean empty) {
@@ -225,7 +225,7 @@ public class AnalyseUi {
     updateTournamentsListView();
 
     tournamentsListView.getSelectionModel().selectedItemProperty()
-        .addListener((_, _, newTournament) -> {
+        .addListener((a, b, newTournament) -> {
           if (newTournament != null) {
             TournamentAnalysisUI.showTournamentAnalysis(newTournament);
             TournamentStatisticsUI.showTournamentStatistics(newTournament);

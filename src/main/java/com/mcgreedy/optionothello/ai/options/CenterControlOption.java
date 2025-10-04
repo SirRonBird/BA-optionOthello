@@ -7,17 +7,14 @@ import com.mcgreedy.optionothello.utils.Constants;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 /**
- * CenterControlOption
- * --------------------------------------------------------------------
- * Ziel: im frühen Spiel (bis ~20 Steine) möglichst zentrumsnahe Felder
- * besetzen. Bewertung über negative Manhattan-Distanz zum Brettzentrum.
- * Danach wird die Option automatisch schwächer (Termination).
+ * Option to control the center of the board. The Option selects a move which creates the most
+ * disk in the center fields and which is the quietest. After 20 moves in the game the option
+ * is over.
  */
 public class CenterControlOption implements Option {
 
@@ -70,7 +67,6 @@ public class CenterControlOption implements Option {
     }
 
     if(myCenterDiscs <= enemyCenterDiscs){
-      // Kandidaten mit maximaler Center-Besetzung sammeln
       List<Move> bestCenterMoves = new ArrayList<>();
       int mostCenterDiscs = 0;
       for(Move move : centerMoves){
@@ -89,7 +85,6 @@ public class CenterControlOption implements Option {
           bestCenterMoves.add(move);
         }
       }
-      // Unter den Zügen mit maximaler Center-Kontrolle wähle den leisesten
       Move quietMove = null;
       double bestScore = Double.POSITIVE_INFINITY;
       for(Move move : bestCenterMoves){
@@ -107,7 +102,6 @@ public class CenterControlOption implements Option {
         return quietMove;
       }
     } else {
-      //get most quite move
       Move quiestMove = null;
       double bestScore = Double.POSITIVE_INFINITY;
       for(Move move : centerMoves){
@@ -137,34 +131,25 @@ public class CenterControlOption implements Option {
     long emptySquares = ~(board.getWhite() | board.getBlack());
     int frontierStoneCount = 0;
 
-    // Für jede Position auf dem Brett prüfen
     for (int position = 0; position < 64; position++) {
       long positionBit = 1L << position;
-      // Nur eigene Steine betrachten
       if ((playerPieces & positionBit) == 0) {
         continue;
       }
-      // Prüfe alle Nachbarrichtungen auf leere Felder
-      for (int direction : Board.DIRECTIONS) {
+      for (int direction : Constants.DIRECTIONS) {
         int neighborPosition = position + direction;
         if (neighborPosition < 0 || neighborPosition >= 64) {
           continue;
         }
         long neighborBit = 1L << neighborPosition;
-        // Wenn angrenzendes Feld leer ist, zählt der Stein als Frontier
         if ((emptySquares & neighborBit) != 0) {
           frontierStoneCount++;
-          //break;
         }
       }
     }
     return frontierStoneCount;
   }
 
-  /**
-   * Zählt die maximale Länge einer Frontier-„Wand“ in Reihen und Spalten.
-   * Eine Frontier-Stein ist ein eigener Stein mit mindestens einem leeren Nachbarn.
-   */
   public int countMaxFrontierWall(Board board, PLAYER_COLOR playerColor) {
     long playerPieces = playerColor == PLAYER_COLOR.WHITE
         ? board.getWhite()
@@ -172,12 +157,11 @@ public class CenterControlOption implements Option {
     long emptySquares = ~(board.getWhite() | board.getBlack());
     int maxWallLength = 0;
 
-    // Prüfe alle 8 Reihen
     for (int row = 0; row < 8; row++) {
       int currentLength = 0;
       for (int col = 0; col < 8; col++) {
         int pos = row * 8 + col;
-        if (isFrontierStone(board, playerPieces, emptySquares, pos)) {
+        if (isFrontierStone(playerPieces, emptySquares, pos)) {
           currentLength++;
           maxWallLength = Math.max(maxWallLength, currentLength);
         } else {
@@ -186,12 +170,11 @@ public class CenterControlOption implements Option {
       }
     }
 
-    // Prüfe alle 8 Spalten
     for (int col = 0; col < 8; col++) {
       int currentLength = 0;
       for (int row = 0; row < 8; row++) {
         int pos = row * 8 + col;
-        if (isFrontierStone(board, playerPieces, emptySquares, pos)) {
+        if (isFrontierStone(playerPieces, emptySquares, pos)) {
           currentLength++;
           maxWallLength = Math.max(maxWallLength, currentLength);
         } else {
@@ -203,14 +186,12 @@ public class CenterControlOption implements Option {
     return maxWallLength;
   }
 
-  /** Prüft, ob an Position pos ein Frontier-Stein liegt. */
-  private boolean isFrontierStone(Board board, long playerPieces, long emptySquares, int pos) {
+  private boolean isFrontierStone(long playerPieces, long emptySquares, int pos) {
     long bit = 1L << pos;
     if ((playerPieces & bit) == 0) {
       return false;
     }
-    // Ein Frontier-Stein hat mindestens einen leeren Nachbarn
-    for (int dir : Board.DIRECTIONS) {
+    for (int dir : Constants.DIRECTIONS) {
       int neighbor = pos + dir;
       if (neighbor < 0 || neighbor >= 64) continue;
       if ((emptySquares & (1L << neighbor)) != 0) {
@@ -219,7 +200,6 @@ public class CenterControlOption implements Option {
     }
     return false;
   }
-
 
   @Override
   public String getName() {

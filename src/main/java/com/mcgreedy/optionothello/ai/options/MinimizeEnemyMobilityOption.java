@@ -8,6 +8,10 @@ import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to minimize the possible moves for the enemy
+ */
+
 public class MinimizeEnemyMobilityOption implements Option {
 
   private static final String NAME = "MinimizeEnemyMobilityOption";
@@ -26,14 +30,12 @@ public class MinimizeEnemyMobilityOption implements Option {
 
   @Override
   public boolean shouldTerminate(Board board, PLAYER_COLOR playerColor) {
-    /*return board.generateAllPossibleMoves(playerColor == PLAYER_COLOR.WHITE) == 0L
-        || board.isGameOver();*/
     return true;
   }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    LOGGER.info(NAME);
+
     boolean isWhite = possibleMoves.getFirst().getColor() == PLAYER_COLOR.WHITE;
     int leastEnemyMovesPossible = Integer.MAX_VALUE;
     Move bestMove = null;

@@ -7,7 +7,9 @@ public record OMCTSSettings(
     double explorationConstant,
     List<Option> optionList,
     boolean useMast,
-    boolean useRave
+    boolean useRave,
+    double tau,
+    double k
 ) {
 
 

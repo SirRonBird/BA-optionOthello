@@ -8,6 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to control the antidiagonal. Selectable if the player don't have any
+ * disk on the diagonal. Then selects a move which creates a disk on the diagonal.
+ * Option does not play on the X-fields.
+ * Option is finished if at least one disk is on the diag.
+ */
+
 public class AntiDiagControlOption implements Option {
 
   private static final String NAME = "MainDiagControl";
@@ -22,7 +29,6 @@ public class AntiDiagControlOption implements Option {
 
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
-    // if the player dont have any piece on the diag
     boolean isWhite = playerColor == PLAYER_COLOR.WHITE;
     if(isWhite){
       return (board.getWhite() & ANTIDIAG) == 0;
@@ -77,7 +83,6 @@ public class AntiDiagControlOption implements Option {
     if(!bestMoves.isEmpty()){
       return bestMoves.get(rand.nextInt(bestMoves.size()));
     }
-
 
     return possibleMoves.get(rand.nextInt(possibleMoves.size()));
   }

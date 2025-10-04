@@ -1,5 +1,7 @@
-package com.mcgreedy.optionothello.engine;
+package com.mcgreedy.optionothello.gamemanagement;
 
+import com.mcgreedy.optionothello.engine.Board;
+import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.utils.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,15 +11,14 @@ import java.util.List;
 
 public class Game {
 
-    public int blackPieces;
-    public int whitePieces;
+    Board board;
+    int blackPieces;
+    int whitePieces;
 
-    public List<Move> moveHistory;
-    public List<Board> boardHistory;
+    List<Move> moveHistory;
+    List<Board> boardHistory;
 
     int winner = -1;
-
-    public Board board;
 
     private static final Logger LOGGER = LogManager.getLogger(Game.class);
 
@@ -63,15 +64,21 @@ public class Game {
         return board.getWhite();
     }
 
-    public void addMoveToHistory(Move move) {
-        this.moveHistory.add(move);
-    }
-
     public void addBoardToHistory(Board board) {
         assert this.boardHistory != null;
-        LOGGER.debug("Adding board to history: {}", board.toString());
+        LOGGER.debug("Adding board to history: {}", board);
         this.boardHistory.add(board);
     }
 
+    public List<Move> getMoveHistory() {
+        return moveHistory;
+    }
 
+    public List<Board> getBoardHistory() {
+        return boardHistory;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
 }

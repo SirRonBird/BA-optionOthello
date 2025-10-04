@@ -257,6 +257,7 @@ public class TournamentStatisticsUI {
 
     TableColumn<MetricRow, String> whiteColumn = new TableColumn<>(tournamentDto.getTournament().getWhitePlayer().getType().toString());
     whiteColumn.setCellValueFactory(new PropertyValueFactory<>("whiteValue"));
+    whiteColumn.setStyle("-fx-alignment: center;-fx-text-fill: gray;");
 
     TableColumn<MetricRow, String> blackColumn = new TableColumn<>(tournamentDto.getTournament().getBlackPlayer().getType().toString());
     blackColumn.setCellValueFactory(new PropertyValueFactory<>("blackValue"));
@@ -271,7 +272,8 @@ public class TournamentStatisticsUI {
         new MetricRow("Max Searched Nodes", whiteStats.maxSearchedNodes, blackStats.maxSearchedNodes),
         new MetricRow("Max Search Time (ms)", whiteStats.maxSearchTime, blackStats.maxSearchTime),
         new MetricRow("Avg. Search Depth",whiteStats.getAverageSearchDepth(), blackStats.getAverageSearchDepth()),
-        new MetricRow("Avg. Searched Nodes", whiteStats.getAverageSearchedNodes(), blackStats.getAverageSearchedNodes())
+        new MetricRow("Avg. Searched Nodes", whiteStats.getAverageSearchedNodes(), blackStats.getAverageSearchedNodes()),
+        new MetricRow("Avg. Search Time (ms)", whiteStats.getAverageSearchTime(), blackStats.getAverageSearchTime())
     );
 
     tableView.setItems(data);
@@ -299,6 +301,8 @@ public class TournamentStatisticsUI {
     public int totalSearchedNodes = 0;
     public int moveCount = 0;
 
+    public long totalSearchTime = 0;
+
     public double getAverageSearchDepth() {
       if (moveCount == 0) return 0;
       double avg = (double) totalSearchDepth / moveCount;
@@ -310,6 +314,13 @@ public class TournamentStatisticsUI {
       double avg = (double) totalSearchedNodes / moveCount;
       return Math.round(avg * 10.0) / 10.0;
     }
+
+    public double getAverageSearchTime() {
+      if (moveCount == 0) return 0;
+      double avg = (double) totalSearchTime / moveCount;
+      return Math.round(avg * 10.0) / 10.0;
+    }
+
   }
 
   private static PlayerStats calculatePlayerStats(PLAYER_COLOR color, SaveTournamentDTO tournamentDto) {
@@ -318,7 +329,6 @@ public class TournamentStatisticsUI {
     for(GameDetails game: tournamentDto.getTournament().getGames()) {
       for(MoveDetails move: game.getMoves()) {
         MoveStatistics moveStatistics = move.getMoveStatistics();
-        if(stats == null) continue;
 
         if(move.getColor() == color) {
           stats.maxSearchDepth = Math.max(stats.maxSearchDepth, moveStatistics.getSearchDepth());
@@ -327,6 +337,9 @@ public class TournamentStatisticsUI {
 
           stats.totalSearchDepth += moveStatistics.getSearchDepth();
           stats.totalSearchedNodes += moveStatistics.getSearchedNodes();
+
+          stats.totalSearchTime += moveStatistics.getSearchTime();
+
           stats.moveCount++;
         }
       }

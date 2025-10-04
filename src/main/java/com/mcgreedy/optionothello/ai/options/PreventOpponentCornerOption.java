@@ -5,21 +5,14 @@ import com.mcgreedy.optionothello.engine.Board;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.utils.Constants;
 import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
-import com.mcgreedy.optionothello.utils.Constants.PLAYER_TYPE;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 /**
- * PreventOpponentCornerOption (verbessert)
- * --------------------------------------------------------------------
- * Ziel: Züge vermeiden/abfangen, die dem Gegner im NÄCHSTEN Zug
- * eine Ecke ermöglichen (Corner-Setups via C-/X-Squares).
- * Bewertung: simuliere jeden eigenen Zug und prüfe, ob der Gegner danach
- * eine Ecke hat. Tie-Break über Gegner-Mobilität.
+ * Option to select a move which prevents a corner to be taken by the enemy
  */
 public class PreventOpponentCornerOption implements Option {
 

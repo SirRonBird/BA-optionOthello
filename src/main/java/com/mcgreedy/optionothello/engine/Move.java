@@ -1,24 +1,17 @@
 package com.mcgreedy.optionothello.engine;
 
 import com.mcgreedy.optionothello.ai.Option;
-import com.mcgreedy.optionothello.ai.Option_js;
 import com.mcgreedy.optionothello.utils.Constants;
 
 import java.util.Objects;
 
 public class Move {
 
-    private Constants.PLAYER_COLOR color;
-    private int position;
+    int position;
 
-    private int searchDepth;
-    private Option option = null;
-    private int searchedNodes;
-    private long searchTime;
-
-    private MoveStatistics statistics;
-
-    private Constants.PLAYER_TYPE playerType;
+    Constants.PLAYER_COLOR color;
+    Constants.PLAYER_TYPE playerType;
+    MoveStatistics statistics;
 
     public Move() {
         // default constructor needed for Jackson
@@ -27,26 +20,34 @@ public class Move {
     public Move(Constants.PLAYER_COLOR color, int position, int searchDepth, Constants.PLAYER_TYPE playerType) {
         this.color = color;
         this.position = position;
-        this.searchDepth = searchDepth;
         this.playerType = playerType;
+        this.statistics = new MoveStatistics();
+        this.statistics.setSearchDepth(searchDepth);
 
-    }
-
-    public MoveStatistics getStatistics() {
-        return statistics;
     }
 
     public void setStatistics(MoveStatistics statistics) {
         this.statistics = statistics;
     }
 
+    public void setSearchDepth(int searchDepth) {
+        this.statistics.setSearchDepth(searchDepth);
+    }
+
+    public void setOption(Option option) {
+        this.statistics.setOption(option);
+    }
 
     public int getPosition() {
         return position;
     }
 
+    public Option getOption() {
+        return this.statistics.getOption();
+    }
+
     public int getSearchDepth() {
-        return searchDepth;
+        return this.statistics.getSearchDepth();
     }
 
     public Constants.PLAYER_TYPE getPlayerType() {
@@ -57,12 +58,8 @@ public class Move {
         return color;
     }
 
-    public void setSearchDepth(int searchDepth) {
-        this.searchDepth = searchDepth;
-    }
-
-    public void setOption(Option option) {
-        this.option = option;
+    public MoveStatistics getStatistics() {
+        return statistics;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class Move {
         return "Move{" +
                 "color=" + color +
                 ", position=" + position +
-                ", searchDepth=" + searchDepth +
+                ", searchDepth=" + this.statistics.getSearchDepth() +
                 ", playerType=" + playerType +
                 '}';
     }
@@ -88,7 +85,5 @@ public class Move {
         return Objects.hash(position, color);
     }
 
-    public Option getOption() {
-        return this.option;
-    }
+
 }

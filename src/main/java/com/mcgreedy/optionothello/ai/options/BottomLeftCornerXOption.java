@@ -8,6 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to get the bottom left corner, if the X field is captured by the enemy.
+ * Option selects move which either directly captures the corner or creates a disk
+ * on the diagonal to capture the corner in the next move.
+ * Option is finished if the bottom left corner is captured
+ */
+
 public class BottomLeftCornerXOption implements Option {
 
   private static final String NAME = "BottomLeftCornerX";
@@ -17,7 +24,7 @@ public class BottomLeftCornerXOption implements Option {
   private static final long ANTIDIAG = 4432676782080L;
   private static final int CORNER_POS = 56;
 
-  private Random rand = new Random();
+  private final Random rand = new Random();
 
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
@@ -44,7 +51,6 @@ public class BottomLeftCornerXOption implements Option {
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    LOGGER.info(NAME);
     boolean isWhite = possibleMoves.getFirst().getColor() == PLAYER_COLOR.WHITE;
     List<Move> bestMoves = new ArrayList<>();
     for(Move move : possibleMoves) {
@@ -69,7 +75,6 @@ public class BottomLeftCornerXOption implements Option {
     if(!bestMoves.isEmpty()) {
       return bestMoves.get(rand.nextInt(bestMoves.size()));
     } else {
-      //TODO: better FallBack?
       return possibleMoves.get(rand.nextInt(possibleMoves.size()));
     }
   }

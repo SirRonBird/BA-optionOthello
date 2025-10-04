@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to play stable disk of from the top right corner. Option selects
+ * move which is stable along one of the edges. If no stable move is possible
+ * or both edges are full the option is finished
+ */
+
 public class TopRightStableCornerOption implements Option {
 
   private static final String NAME = "TopRightStableCorner";
@@ -21,7 +27,7 @@ public class TopRightStableCornerOption implements Option {
   @Override
   public boolean isBoardInInitiationSet(Board board, PLAYER_COLOR playerColor) {
     Board cornerMask = new Board("TopRightCorner", true);
-    cornerMask.mask = TOPRIGHT_CORNER;
+    cornerMask.setMask(TOPRIGHT_CORNER);
 
     long possibleMovesBitBoard = board.generateAllPossibleMoves(playerColor == PLAYER_COLOR.WHITE);
 

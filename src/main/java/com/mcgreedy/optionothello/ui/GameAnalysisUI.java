@@ -111,7 +111,7 @@ public class GameAnalysisUI {
 
     // back-Button (◀)
     Button backButton = new Button("◀");
-    backButton.setOnAction(_ -> {
+    backButton.setOnAction(a -> {
       double current = moveSlider.getValue();
       if (current > moveSlider.getMin()) {
         moveSlider.setValue(current - 1);
@@ -120,7 +120,7 @@ public class GameAnalysisUI {
 
     // front-Button (▶)
     Button forwardButton = new Button("▶");
-    forwardButton.setOnAction(_ -> {
+    forwardButton.setOnAction(a -> {
       double current = moveSlider.getValue();
       if (current < moveSlider.getMax()) {
         moveSlider.setValue(current + 1);
@@ -132,7 +132,7 @@ public class GameAnalysisUI {
 
 
     Button exportButton = new Button("Export game to png");
-    exportButton.setOnAction(_ -> {
+    exportButton.setOnAction(a -> {
       SaveGameUtils.saveBoardAsPng(gameBoard, "board.png");
     });
 
@@ -152,7 +152,7 @@ public class GameAnalysisUI {
     slider.setSnapToTicks(true);
     HBox.setHgrow(slider, Priority.ALWAYS);
     slider.setMaxWidth(Double.MAX_VALUE);
-    slider.valueProperty().addListener((_, _, newVal) -> {
+    slider.valueProperty().addListener((a, b, newVal) -> {
       if (newVal.intValue() == SLIDER_START_VALUE) {
         GUIUtils.updateBoardGrid(
             saveGameDTO.getGame().getStartBoardBlack(),

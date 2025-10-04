@@ -2,7 +2,6 @@ package com.mcgreedy.optionothello.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mcgreedy.optionothello.ai.Option;
-import com.mcgreedy.optionothello.ai.Option_js;
 import com.mcgreedy.optionothello.utils.SaveGameUtils;
 import java.util.ArrayList;
 import java.util.List;

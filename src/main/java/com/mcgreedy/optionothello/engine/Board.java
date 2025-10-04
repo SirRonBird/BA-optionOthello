@@ -17,54 +17,43 @@ public class Board {
     long white;
 
     boolean isMask;
-    public long mask;
-    public String name;
+    long mask;
+    String name;
 
-    static final long FULL = -1L; // every 64 Bits set to 1
+    private static final long FULL = -1L; // every 64 Bits set to 1
+    private static final long LEFT_EDGE = 0x0101010101010101L;
+    private static final long RIGHT_EDGE = 0x8080808080808080L;
+    private static final long START_WHITE = 0x0000001008000000L;
+    private static final long START_BLACK = 0x0000000810000000L;
 
-    public static final int[] DIRECTIONS = {-8, 8, 1, -1, -7, 7, -9, 9};
-    static final long LEFT_EDGE = 0x0101010101010101L;
-    static final long RIGHT_EDGE = 0x8080808080808080L;
-    //static final long TOP_EDGE = 0xffL;
-    //static final long BOTTOM_EDGE = 0xff00000000000000L;
+    //For testing
+    /*static final long START_WHITE = 8232037175148945520L;
+    static final long START_BLACK = 0x81416d4ded6f1400L;*/
 
-    static final long START_WHITE = 0x0000001008000000L;
-    static final long START_BLACK = 0x0000000810000000L;
-
-    /*static final long START_WHITE = 17246978048L;
-    static final long START_BLACK = 17695668175360L*/;
-
-    public long startWhite = START_WHITE;
-    public long startBlack = START_BLACK;
+    public static final long WHITE_START_BOARD = START_WHITE;
+    public static final long BLACK_START_BOARD = START_BLACK;
 
     private static final Logger LOGGER = LogManager.getLogger(Board.class);
 
+    /* Start board */
     public Board() {
         black = START_BLACK;
         white = START_WHITE;
         this.isMask = false;
     }
 
+    /* Special board */
     public Board(long black, long white) {
         this.black = black;
         this.white = white;
         this.isMask = false;
     }
 
+    /* Mask board */
     public Board(String name, boolean isMask) {
         this.name = name;
         this.isMask = isMask;
         this.mask = 0L;
-    }
-
-    public void updateMask(int position) {
-        this.mask ^= (1L << position);
-    }
-
-    public void clearMask(){
-        if(this.isMask){
-            this.mask = 0L;
-        }
     }
 
     public void updateBoard(int position, boolean isWhite) {
@@ -77,7 +66,7 @@ public class Board {
 
         long flipped = 0L;
 
-        for (int dir : DIRECTIONS) {
+        for (int dir : Constants.DIRECTIONS) {
             long mask = 0L;
             long current = shift(move, dir);
 
@@ -100,10 +89,6 @@ public class Board {
         }
     }
 
-    public boolean isBoardFull() {
-        return (black | white) == FULL;
-    }
-
     public long generateAllPossibleMoves(boolean forWhite) {
         long player = forWhite ? white : black;
         long opponent = forWhite ? black : white;
@@ -111,7 +96,7 @@ public class Board {
         long empty = ~(player | opponent);
         long possibleMoves = 0L;
 
-        for (int dir : DIRECTIONS) {
+        for (int dir : Constants.DIRECTIONS) {
             long mask = shift(player, dir) & opponent;
 
             for (int i = 0; i < 5; i++) {
@@ -124,54 +109,6 @@ public class Board {
         }
 
         return possibleMoves;
-    }
-
-    private long shift(long bits, int direction) {
-        return switch (direction) {
-            case 1 -> (bits << 1) & ~LEFT_EDGE;      // Osten (nach rechts)
-            case -1 -> (bits >>> 1) & ~RIGHT_EDGE;   // Westen (nach links)
-            case 8 -> bits << 8;                     // Süden (nach unten)
-            case -8 -> bits >>> 8;                   // Norden (nach oben)
-            case 9 -> (bits << 9) & ~LEFT_EDGE;      // Südost
-            case -9 -> (bits >>> 9) & ~RIGHT_EDGE;   // Nordwest
-            case 7 -> (bits << 7) & ~RIGHT_EDGE;     // Südwest
-            case -7 -> (bits >>> 7) & ~LEFT_EDGE;    // Nordost
-            default -> throw new IllegalArgumentException("Ungültige Richtung: " + direction);
-        };
-    }
-
-    public long getBlack() {
-        return black;
-    }
-
-    public long getWhite() {
-        return white;
-    }
-
-    public boolean boardIsHittingMask(Board mask, PLAYER_COLOR color) {
-        if(mask.isMask){
-            long boardLong = color == PLAYER_COLOR.BLACK ? this.getBlack() : this.getWhite();
-            return (boardLong & mask.mask) != 0;
-        }
-        return false;
-    }
-
-
-    @Override
-    public String toString() {
-        if(this.isMask){
-            return "Mask-Board{"+
-                "mask="+ mask+ '}';
-        }else {
-            return "Board{" +
-                "black=" + black +
-                ", white=" + white +
-                '}';
-        }
-    }
-
-    public boolean isGameOver() {
-        return isBoardFull() || generateAllPossibleMoves(true) == 0L && generateAllPossibleMoves(false) == 0L;
     }
 
     public List<Move> generateMovesAsList(boolean forWhite, int searchDepth, Constants.PLAYER_TYPE playerType) {
@@ -190,15 +127,22 @@ public class Board {
         return moves;
     }
 
-    @Override
-    public Board clone() {
-        if(this.isMask){
-            Board clone = new Board(this.name,true);
-            clone.mask = this.mask;
-            return clone;
-        } else {
-            return new Board(this.black, this.white);
-        }
+    private long shift(long bits, int direction) {
+        return switch (direction) {
+            case 1 -> (bits << 1) & ~LEFT_EDGE;      // Osten (nach rechts)
+            case -1 -> (bits >>> 1) & ~RIGHT_EDGE;   // Westen (nach links)
+            case 8 -> bits << 8;                     // Süden (nach unten)
+            case -8 -> bits >>> 8;                   // Norden (nach oben)
+            case 9 -> (bits << 9) & ~LEFT_EDGE;      // Südost
+            case -9 -> (bits >>> 9) & ~RIGHT_EDGE;   // Nordwest
+            case 7 -> (bits << 7) & ~RIGHT_EDGE;     // Südwest
+            case -7 -> (bits >>> 7) & ~LEFT_EDGE;    // Nordost
+            default -> throw new IllegalArgumentException("Ungültige Richtung: " + direction);
+        };
+    }
+
+    public boolean isGameOver() {
+        return isBoardFull() || generateAllPossibleMoves(true) == 0L && generateAllPossibleMoves(false) == 0L;
     }
 
     public Constants.PLAYER_COLOR getWinner() {
@@ -212,10 +156,14 @@ public class Board {
         } else {
             return null; // oder z.B. Constants.PLAYER_COLOR.NONE
         }
+    }
 
+    public boolean isBoardFull() {
+        return (black | white) == FULL;
     }
 
     public int getWhiteCount(){ return Long.bitCount(white); }
+
     public int getBlackCount(){ return Long.bitCount(black); }
 
     public int getValue(boolean forWhite) {
@@ -223,6 +171,58 @@ public class Board {
             return getWhiteCount() - getBlackCount();
         } else {
             return getBlackCount() - getWhiteCount();
+        }
+    }
+
+    public boolean boardIsHittingMask(Board mask, PLAYER_COLOR color) {
+        if(mask.isMask){
+            long boardLong = color == PLAYER_COLOR.BLACK ? this.getBlack() : this.getWhite();
+            return (boardLong & mask.mask) != 0;
+        }
+        return false;
+    }
+
+    public long getBlack() {
+        return black;
+    }
+
+    public long getWhite() {
+        return white;
+    }
+
+    public long getMask() {
+        return mask;
+    }
+
+    public void setMask(long mask) {
+        this.mask = mask;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        if(this.isMask){
+            return "Mask-Board{"+
+                "mask="+ mask+ '}';
+        }else {
+            return "Board{" +
+                "black=" + black +
+                ", white=" + white +
+                '}';
+        }
+    }
+
+    @Override
+    public Board clone() {
+        if(this.isMask){
+            Board clone = new Board(this.name,true);
+            clone.mask = this.mask;
+            return clone;
+        } else {
+            return new Board(this.black, this.white);
         }
     }
 }

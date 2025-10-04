@@ -7,6 +7,10 @@ import com.mcgreedy.optionothello.utils.Constants.PLAYER_COLOR;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Option to select the move which creates the most possible next moves
+ */
+
 public class MaximizeMobilityOption implements Option {
 
   private static final String NAME = "MaximizeMobilityOption";
@@ -26,13 +30,10 @@ public class MaximizeMobilityOption implements Option {
   @Override
   public boolean shouldTerminate(Board board, PLAYER_COLOR playerColor) {
     return true;
-    /*return board.generateAllPossibleMoves(playerColor == PLAYER_COLOR.WHITE) == 0L
-        || board.isGameOver();*/
   }
 
   @Override
   public Move getBestMove(Board board, List<Move> possibleMoves) {
-    LOGGER.info(NAME);
     PLAYER_COLOR me = possibleMoves.getFirst().getColor();
     PLAYER_COLOR opponent = me == PLAYER_COLOR.WHITE ? PLAYER_COLOR.BLACK : PLAYER_COLOR.WHITE;
     Move bestMove = null;

@@ -1,7 +1,6 @@
 package com.mcgreedy.optionothello.gamemanagement;
 
-import com.mcgreedy.optionothello.ai.OMCTSPlayer;
-import com.mcgreedy.optionothello.engine.Game;
+import com.mcgreedy.optionothello.ai.Player;
 import com.mcgreedy.optionothello.engine.Move;
 import com.mcgreedy.optionothello.ui.MainGUI;
 import com.mcgreedy.optionothello.utils.Constants;
@@ -18,20 +17,15 @@ public class Gamemanager {
 
   Game currentGame;
   Tournament currentTournament;
+  Player currentPlayer;
 
   Player blackPlayer;
   Player whitePlayer;
 
   boolean isWhiteMove = false;
-
-
-  Player currentPlayer;
-
   int consecutivePasses;
   int winner = -1;
-
   int tournamentWinner = -1;
-
   boolean isTournament = false;
 
   private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -41,6 +35,11 @@ public class Gamemanager {
     LOGGER.info("Game manager created");
   }
 
+  /**
+   * Creates new game with black player und white player and starts the game
+   * @param black
+   * @param white
+   */
   public void newGame(Player black, Player white) {
     LOGGER.info("Create new game");
     blackPlayer = black;
@@ -90,6 +89,11 @@ public class Gamemanager {
     }
   }
 
+
+  /**
+   * Updates the board and game state for a given move
+   * @param move
+   */
   public void makeMove(Move move) {
     if (currentPlayer.getColor() != move.getColor()) {
       return;
@@ -115,6 +119,11 @@ public class Gamemanager {
     }
   }
 
+  /**
+   * If a player passes and counts the consecutive passes if 2 moves in a row
+   * are pass moves the game is over
+   * @param move
+   */
   public void passMove(Move move) {
     if (currentPlayer.getColor() != move.getColor()) {
       return;
@@ -132,6 +141,9 @@ public class Gamemanager {
     }
   }
 
+  /**
+   * Switches the player to move and calls the respective player getMove method
+   */
   private void handleNextMove() {
     if (currentPlayer.getType() == Constants.PLAYER_TYPE.HUMAN) {
       long allPossibleMoves = currentGame.board.generateAllPossibleMoves(isWhiteMove);
@@ -188,7 +200,7 @@ public class Gamemanager {
         isTournament = false;
       } else {
         //start new game
-        newGame(currentTournament.blackPlayer, currentTournament.whitePlayer);
+        newGame(this.blackPlayer, this.whitePlayer);
       }
     } else {
       currentGame.setWinner(winner);
@@ -209,7 +221,7 @@ public class Gamemanager {
   public void newTournament(Player black, Player white, int numberOfGames) {
     LOGGER.info("Starting new tournament");
 
-    currentTournament = new Tournament(black, white, numberOfGames);
+    currentTournament = new Tournament(this, numberOfGames);
 
     isTournament = true;
 

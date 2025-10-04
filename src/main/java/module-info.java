@@ -12,7 +12,6 @@ module com.mcgreedy.optionothello {
   requires org.fxmisc.richtext;
   requires reactfx;
   requires javafx.swing;
-  requires org.graalvm.polyglot;
   requires java.scripting;
   requires java.prefs;
   requires eu.hansolo.tilesfx;
@@ -33,4 +32,6 @@ module com.mcgreedy.optionothello {
   exports com.mcgreedy.optionothello.utils;
   exports com.mcgreedy.optionothello.ai;
   exports com.mcgreedy.optionothello.dtos;
+  opens com.mcgreedy.optionothello.gamemanagement to com.fasterxml.jackson.databind;
+  opens com.mcgreedy.optionothello.ai to com.fasterxml.jackson.databind;
 }

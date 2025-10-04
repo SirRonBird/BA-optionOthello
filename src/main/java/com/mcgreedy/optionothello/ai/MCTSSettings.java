@@ -3,7 +3,9 @@ package com.mcgreedy.optionothello.ai;
 public record MCTSSettings(
     double explorationConstant,
     boolean useMast,
-    boolean useRave
+    boolean useRave,
+    double tau,
+    double k
 ) {
 
 
